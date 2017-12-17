@@ -7,7 +7,29 @@ package calendarapp;
  1521221039
  */
 
-import java.awt.Colorimport java.awt.Componentimport java.awt.event.ActionEventimport java.io.Fileimport java.io.FileInputStreamimport java.io.IOExceptionimport java.io.InputStreamimport java.text.DateFormatimport java.util.Collectionimport java.util.Dateimport javax.swing.table.DefaultTableModelimport javax.swing.Timerimport java.util.GregorianCalendarimport java.util.HashSetimport java.util.regex.Matcherimport java.util.regex.Patternimport javax.swing.DefaultListModelimport javax.swing.JOptionPaneimport javax.swing.JTableimport javax.swing.ListSelectionModelimport javax.swing.table.DefaultTableCellRenderer;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.Timer;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.DefaultTableCellRenderer;
 
 public class CalendarApp extends javax.swing.JFrame {
 
@@ -23,7 +45,9 @@ public class CalendarApp extends javax.swing.JFrame {
     String boostTime;
     boolean found = true;
     final static String LINE_SEP = System.getProperty("line.separator"), TAB = "\\t", specialSep = ",   ";
-    static File f = new File("CalendarApp", "Agenda.txt");;
+    static File f = new File("src", "Agenda.txt");;
+    List<Long> IDs = new ArrayList<>();
+    List<Agenda> Agendas = new ArrayList<>();
 
     public CalendarApp() {
         initComponents();
@@ -33,7 +57,7 @@ public class CalendarApp extends javax.swing.JFrame {
         dlm = new DefaultListModel();
         agendaList.setModel(dlm);
         cal = new GregorianCalendar();
-
+        
         this.setTitle("                                                        "
                 + "                                                Calendar");
         this.setResizable(false);
@@ -63,11 +87,11 @@ public class CalendarApp extends javax.swing.JFrame {
         date.setText(realDay + "." + (realMonth + 1) + "." + realYear);
 
         Timer timer = new Timer(500, (ActionEvent e) -> {
-            f = new File("CalendarApp", "Agenda.txt");
+            f = new File("src", "Agenda.txt");
             tickTock();//saati günceller.
             readAgenda();
-            fillTheAgenda();
             calendarTable.setDefaultRenderer(calendarTable.getColumnClass(0), new CalendarRenderer());
+            refreshCalendar(currentMonth, currentYear);
         });
         timer.setRepeats(true);
         timer.setCoalesce(true);
@@ -112,18 +136,20 @@ public class CalendarApp extends javax.swing.JFrame {
 
     static void readLine(String line) { //ilk
         String[] satır = line.split(",   ");
-        String a = satır[0];
-        String b = satır[1];
-        String c = satır[2];
-        String c2 = satır[3];
+        long id = Long.parseLong(satır[0]);
+        String a = satır[1];
+        String b = satır[2];
+        String c = satır[3];
+        String c2 = satır[4];
         boolean c22 = Boolean.parseBoolean(c2);
-        String d = satır[4];
-        String e = satır[5];
-        String f = satır[6];
-        String g = satır[7];
-        String h = satır[8];
-        String j = satır[9];
-        Agenda agenda = new Agenda(a, b, c, c22, d, e, f, g, h, j);
+        String d = satır[5];
+        String e = satır[6];
+        String f = satır[7];
+        String g = satır[8];
+        String h = satır[9];
+        String j = satır[10];
+        
+        Agenda agenda = new Agenda(id,a, b, c, c22, d, e, f, g, h, j);
         data.add(agenda);
     }
 
@@ -163,16 +189,20 @@ public class CalendarApp extends javax.swing.JFrame {
                     }
                     int m = Integer.parseInt(month);
                     month = months[m - 1];
-                                //System.out.println(day + " - " + m + " - " + year +"----> real one = " + x.date);
-
+                    
                     if (x.color.equals("Red") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
                         setBackground(new Color(255, 51, 0));
-                    } else if (x.color.equals("Blue") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
-                        setBackground(new Color(51, 102, 255));
-                    } else if (x.color.equals("Green") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
-                        setBackground(new Color(102, 255, 51));
-                    } else if (x.color.equals("Grey") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
-                        setBackground(new Color(128, 128, 128));
+                    }
+                    if (getBackground().toString().equals("java.awt.Color[r=255,g=51,b=0]")) {
+                        //kırmızı renk varsa başka renk koyma
+                    } else {
+                        if (x.color.equals("Blue") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
+                            setBackground(new Color(51, 102, 255));
+                        } else if (x.color.equals("Green") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
+                            setBackground(new Color(102, 255, 51));
+                        } else if (x.color.equals("Grey") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
+                            setBackground(new Color(128, 128, 128));
+                        }
                     }
                 }
             }
@@ -183,10 +213,19 @@ public class CalendarApp extends javax.swing.JFrame {
 
     void fillTheAgenda() {
         boolean f = false;
+        dlm.clear();
         for (Agenda x : data) {
             if (date.getText().equals(x.date)) {
-                fillTheList(x);
                 f = true;
+               if (dlm.contains(x.eventName.toString() + " for day long") || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour) ) {
+                        //içerde zaten varsa ekleme yapma
+                    } else {
+                        if (x.isAllDay) {
+                            dlm.addElement(x.eventName.toString() + " for day long");
+                        } else {
+                            dlm.addElement(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour);
+                        }
+                    }
                 break;
             }
         }
@@ -197,20 +236,7 @@ public class CalendarApp extends javax.swing.JFrame {
 
     }
 
-    void fillTheList(Agenda a) {
-        dlm.clear();
-        if (a.isAllDay) {
-            dlm.addElement(a.eventName.toString() + " for day long");
-            //System.out.println(a.eventName.toString());
-        } else {
-            dlm.addElement(a.eventName.toString() + " " + a.fromHour + " - " + a.toHour);
-        }
-
-    }
-
     void refreshCalendar(int month, int year) {
-        //Variables
-
         int nod, som; //Number Of Days, Start Of Month
 
         //Allow/disallow buttons
@@ -439,16 +465,29 @@ public class CalendarApp extends javax.swing.JFrame {
     private void calendarTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_calendarTableMousePressed
         int row = calendarTable.getSelectedRow();
         int col = calendarTable.getSelectedColumn();
+        IDs.clear();
+        Agendas.clear();
         String selectedDate = calendarTable.getValueAt(row, col) + "." + (currentMonth + 1) + "." + currentYear;
         choosenDate = selectedDate;
-        if (calendarTable.getValueAt(row, col) == "null") {
+        if (calendarTable.getValueAt(row, col) == null) {
             JOptionPane.showMessageDialog(this, "Please select a date that is not null", "Error", JOptionPane.ERROR_MESSAGE);
         } else {
             found = false;
+            dlm.clear();
             for (Agenda x : data) {
-                if (selectedDate.equals(x.date)) {
+                if (selectedDate.equals(x.date) && !IDs.contains(x.id)) {
                     found = true;
-                    fillTheList(x);
+                    IDs.add(x.id);
+                    Agendas.add(x);
+                    if (dlm.contains(x.eventName.toString() + " for day long") || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour) ) {
+                        //içerde zaten varsa ekleme yapma
+                    } else {
+                        if (x.isAllDay) {
+                            dlm.addElement(x.eventName.toString() + " for day long");
+                        } else {
+                            dlm.addElement(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour);
+                        }
+                    }
                 }
             }
             if (!found) {
@@ -531,23 +570,22 @@ public class CalendarApp extends javax.swing.JFrame {
         refreshCalendar(currentMonth, currentYear);
 
         fillTheAgenda();
-
     }//GEN-LAST:event_go2TodayActionPerformed
 
     private void agendaListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_agendaListMouseClicked
         // TODO add your handling code here:
         //System.out.println(agendaList.getSelectedValue());
-        for (Agenda x : data) {
-            if (x.date.equals(choosenDate)) {
+        for (Agenda x : Agendas) {
+            if (x.date.equals(choosenDate) && agendaList.getSelectedIndex() == Agendas.indexOf(x)) {
+                //System.out.println(agendaList.getSelectedIndex() + " - " + Agendas.indexOf(x));
                 if (x.isAllDay) {
                     JOptionPane.showMessageDialog(this, x.eventName + " \n" + "All day long" + "\n" + x.location + "\n" + x.description, x.eventType, JOptionPane.INFORMATION_MESSAGE, null);
                 } else {
-                    JOptionPane.showInputDialog(this, x.eventName + " " + x.fromHour + " - " + x.toHour + "\n" + x.location + "\n" + x.description, JOptionPane.INFORMATION_MESSAGE);
+                    String shown = x.eventName + " " + x.fromHour + " - " + x.toHour + "\n" + x.location + "\n" + x.description;
+                    JOptionPane.showMessageDialog(this, shown, x.eventType, JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         }
-
-
     }//GEN-LAST:event_agendaListMouseClicked
 
     private void timeBoosterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeBoosterActionPerformed

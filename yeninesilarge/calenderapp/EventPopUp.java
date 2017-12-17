@@ -1,4 +1,4 @@
-package calendarapp;
+package yeninesilarge.calendarapp;
 /*
  Enes Kamil YILMAZ
  FSM Vakıf University
@@ -13,6 +13,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -257,6 +258,9 @@ public class EventPopUp extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     void addToData() throws IOException {
+        long id = 0;
+        Random generator = new Random(); 
+        id = generator.nextInt(99999999) + 1;
         if (chcbxAllDay.isSelected()) {
             allday = true;
             timefrom = "-";
@@ -270,23 +274,23 @@ public class EventPopUp extends javax.swing.JFrame {
         if (txtLoc.equals("...Location")){
             txtLoc.setText("-");
         }
-        File f = new File("CalendarApp", "Agenda.txt");
+        File f = new File("src", "Agenda.txt");
         FileWriter fw = new FileWriter(f, true);
         BufferedWriter bw = new BufferedWriter(fw);
        
         if (chkbxEvent.isSelected()) {
-            bw.write(LINE_SEP + "Event" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
+            bw.write(LINE_SEP +id+ ",   " + "Event" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
                     + ",   " + txtLoc.getText().toString() + ",   " + txtDescp.getText().toString() + ",   " + cmbReminder.getSelectedItem().toString());
             bw.close();
             System.out.println("Event eklendi");
         } else if (chckbxBirtday.isSelected()) {
-            bw.write(LINE_SEP + "Birtday" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
+            bw.write(LINE_SEP +id+ ",   " + "Birtday" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
                     + ",   " + txtLoc.getText().toString() + ",   " + txtDescp.getText().toString() + ",   " + cmbReminder.getSelectedItem().toString());
             bw.close();
 
             System.out.println("Birtday eklendi");
         } else if (chckbxAnniversary.isSelected()) {
-            bw.write(LINE_SEP + "Anniversary" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
+            bw.write(LINE_SEP +id+ ",   " + "Anniversary" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
                     + ",   " + txtLoc.getText().toString() + ",   " + txtDescp.getText().toString() + ",   " + cmbReminder.getSelectedItem().toString());
             bw.close();
             System.out.println("Anniversary eklendi");
@@ -325,7 +329,7 @@ public class EventPopUp extends javax.swing.JFrame {
                 try {
                     addToData();
                     CalendarApp.readAgenda();
-                    File f = new File("CalendarApp", "Agenda.txt");
+                    File f = new File("src", "Agenda.txt");
                     FileWriter fw = new FileWriter(f, true);
                     BufferedWriter bw = new BufferedWriter(fw);
                     bw.write(" ");

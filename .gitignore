@@ -1,5 +1,7 @@
 # Java class files
 *.class
+# Netbeans design form files
+*.form
 
 # Windows image file caches
 Thumbs.db
