@@ -1,3 +1,5 @@
+package yeninesilarge.image.editor;
+
 import javax.swing.*;
 import javax.swing.JFileChooser;
 import java.awt.*;

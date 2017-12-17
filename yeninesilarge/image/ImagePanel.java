@@ -1,8 +1,10 @@
+package yeninesilarge.image;
+
 import java.awt.image.BufferedImage;
 import java.awt.Graphics;
 import javax.swing.*;
 
-public class ImageDisplay extends JPanel{
+public class ImagePanel extends JPanel{
 	BufferedImage image;
 	
 	@Override	
