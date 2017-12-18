@@ -10,8 +10,9 @@ import java.util.Map;
 import java.util.HashMap;
 
 
-public class PaintPanel extends JPanel{
+public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonListener{
 	ImagePanel pnlImage;
+	Tool selectedTool;
 	
 	public static JFrame buildFrame(String title, JPanel panel, int x, int y, int width, int height){
 		JFrame frame = new JFrame(title);
@@ -66,7 +67,7 @@ public class PaintPanel extends JPanel{
 
 		pnlTools.setLayout(new BoxLayout(pnlTools, BoxLayout.PAGE_AXIS));
 
-		ButtonGroup groupDrawing = new ToolButtonGroup();
+		ButtonGroup groupDrawing = new ToolButtonGroup(this);
 		makeTool(pnlTools, groupDrawing, "Select");
 		makeTool(pnlTools, groupDrawing, "Line");
 		makeTool(pnlTools, groupDrawing, "Triangle");
@@ -103,11 +104,18 @@ public class PaintPanel extends JPanel{
 		add(pnlColor, constColor);
 
 	}
+	
+	@Override
+	public void onSelection(String toolTitle){
+		selectedTool = new Line(toolTitle);
+		System.out.println("listened-"+toolTitle);
+	}
 
 	private JToggleButton makeTool(JPanel tools, ButtonGroup group, String name){
 		tools.add(Box.createRigidArea(new Dimension(5,5)));
 		JToggleButton tool = new JToggleButton(name);
 		tool.setAlignmentX(Component.CENTER_ALIGNMENT);	
+		tool.setActionCommand(name); //stackoverflow.com/questions/27916896/what-is-an-action-command-that-is-set-by-setactioncommand
 		tools.add(tool);
 		group.add(tool);
 		return tool;
@@ -241,14 +249,31 @@ class Oval extends Tool {
 	}
 }
 
-//src : https://dzone.com/articles/unselect-all-toggle-buttons
+//src : dzone.com/articles/unselect-all-toggle-buttons
 class ToolButtonGroup extends ButtonGroup {
+
+	private	ToolButtonListener toolListener;
+
+	ToolButtonGroup(ToolButtonListener listener){
+		toolListener = listener;
+	}
+
 	@Override
 	public void setSelected(ButtonModel model, boolean selected) {
+	System.out.println("setSelected-");
 		if (selected) {
 			super.setSelected(model, selected);
+			String actionCommand = model.getActionCommand();
+			toolListener.onSelection(actionCommand);
 		} else {
 			clearSelection();
+			toolListener.onSelection(null);
 		}
 	}
+
+	interface ToolButtonListener{
+		void onSelection(String toolTitle);
+	}
 }
+
+
