@@ -12,11 +12,7 @@ import java.util.HashMap;
 
 public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonListener{
 	ImagePanel pnlImage;
-	Tool selectedTool;
-
-	Map<String,Tool> toolMap;
-
-	static final String TOOL_TRIANGLE = "Triangle", TOOL_LINE = "Line", TOOL_OVAL = "Circle", TOOL_RECTANGLE = "Rectangle", TOOL_SELECT = "Select" ;
+	String selectedTool;
 
 	public static JFrame buildFrame(String title, JPanel panel, int x, int y, int width, int height){
 		JFrame frame = new JFrame(title);
@@ -37,25 +33,10 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		PaintPanel pp = new PaintPanel();
 
 		buildFrame("Simple Paint", pp, 500, 50, 900, 900);
-	
-		//testing
-		Tool t = new Triangle("line");
-		Graphics g = pp.pnlImage.getImage().getGraphics();
-		
-		Map<String, Object> params = new HashMap<>();
-		params.put("text","dog");
-		params.put("xPoints", new int[]{501, 700, 850});
-		params.put("yPoints", new int[]{60, 200, 200});
-		params.put("fill", true); 
-		params.put("color", Color.YELLOW);
-		
-		t.draw(g,params);
 	}
 
 	private void init(){
 		setLayout(new GridBagLayout());
-
-		toolMap = new HashMap<>();
 
 		// --------- TOOLS ---------------
 		GridBagConstraints constTools = new GridBagConstraints();
@@ -74,23 +55,11 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		pnlTools.setLayout(new BoxLayout(pnlTools, BoxLayout.PAGE_AXIS));
 
 		ButtonGroup groupDrawing = new ToolButtonGroup(this);
-		makeTool(pnlTools, groupDrawing, TOOL_SELECT);
-		makeTool(pnlTools, groupDrawing, TOOL_LINE);
-		makeTool(pnlTools, groupDrawing, TOOL_TRIANGLE);
-		makeTool(pnlTools, groupDrawing, TOOL_RECTANGLE);
-		makeTool(pnlTools, groupDrawing, TOOL_OVAL); 
-
-		Tool line = new Line(TOOL_LINE);
-		toolMap.put(TOOL_LINE, line);
-
-		Tool triangle = new Triangle(TOOL_TRIANGLE);
-		toolMap.put(TOOL_TRIANGLE, triangle);
-
-		Tool rectangle = new Rectangle(TOOL_RECTANGLE);
-		toolMap.put(TOOL_RECTANGLE, rectangle);
-
-		Tool oval = new Oval(TOOL_OVAL);
-		toolMap.put(TOOL_OVAL, oval);
+		makeTool(pnlTools, groupDrawing, Tool.SELECT);
+		makeTool(pnlTools, groupDrawing, Tool.LINE);
+		makeTool(pnlTools, groupDrawing, Tool.TRIANGLE);
+		makeTool(pnlTools, groupDrawing, Tool.RECTANGLE);
+		makeTool(pnlTools, groupDrawing, Tool.OVAL); 
 
 		// --------- IMAGE ---------------
 		GridBagConstraints constImage= new GridBagConstraints();
@@ -135,8 +104,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 	}
 
 	@Override
-	public void onSelection(String toolTitle){
-		selectedTool = toolMap.get(toolTitle);
+	public void onSelection(String selectedTool){
+		this.selectedTool = selectedTool;
 	}
 
 	private MouseListener mouseListener = new MouseListener() {
@@ -155,8 +124,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		public void mouseClicked(MouseEvent e) {
 			//Testing
 			Point coordinates = coordinatesFromPoint(e.getComponent());
-			
-			Tool t = toolMap.get(TOOL_LINE);
+
+			Tool t = ToolFactory.getInstance(selectedTool);
 			Map<String, Object> params = new HashMap<>();
 			params.put("x1", (int) coordinates.getX() );
 			params.put("y1", (int) coordinates.getY() );
@@ -178,137 +147,6 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 	}
 	
 	
-}
-//should draw(Graphics,Map) throws NullPointerException? -Properties can be null-
-abstract class Tool {
-	String name;
-	void draw(Graphics g, Map<String,Object> params) {
-		Color color = (Color) params.get("color");
-		if( color != null ) {
-			g.setColor(color);
-		}
-	}
-
-	void draw(Component comp, Map<String, Object> params) {
-		Graphics g = comp.getGraphics();
-		draw(g, params);
-	}
-	
-	Tool(String name){
-		this.name = name;
-	}
-	
-	@Override
-	public String toString() {
-		return name;
-	}
-	
-	@Override
-	public int hashCode() {
-		return name.hashCode();
-		}
-	}
-
-class Text extends Tool {
-
-	Text(String name){
-		super(name);
-	}
-	
-	void draw(Graphics g, Map<String,Object> params) {
-		super.draw(g, params);
-		String str = (String) params.get("text");
-		int x = (Integer) params.get("x");
-		int y = (Integer) params.get("y");
-
-		Font font = (Font) params.get("font");
-		if( font != null) g.setFont(font);
-		
-		g.drawString(str, x, y);
-	}
-}
-
-final class Line extends Tool {
-	
-	Line(String name){
-		super(name);
-	}
-	
-	void draw(Graphics g, Map<String, Object> params) {
-		super.draw(g,params);
-		int x1 = (Integer) params.get("x1");
-		int y1 = (Integer) params.get("y1");
-		int x2 = (Integer) params.get("x2");
-		int y2 = (Integer) params.get("y2");
-		
-		g.drawLine(x1,y1,x2,y2);
-	}
-}
-
-final class Triangle extends Tool {
-	
-	Triangle(String name){
-		super(name);
-	}
-	
-	void draw(Graphics g, Map<String, Object> params) {
-		super.draw(g,params);
-		int[] xPoints = (int[]) params.get("xPoints");
-		int[] yPoints = (int[]) params.get("yPoints");
-		
-		if( xPoints.length != yPoints.length) throw new RuntimeException();
-
-		Boolean fill = (Boolean) params.get("fill");
-		
-		if( fill != null && fill ) 
-			g.fillPolygon(xPoints,yPoints, xPoints.length);
-		else 
-			g.drawPolygon(xPoints,yPoints, xPoints.length);
-	}
-}
-
-final class Rectangle extends Tool {
-	
-	Rectangle(String name){
-		super(name);
-	}
-	
-	void draw(Graphics g, Map<String, Object> params) {
-		super.draw(g,params);
-		int x1 = (Integer) params.get("x1");
-		int y1 = (Integer) params.get("y1");
-		int x2 = (Integer) params.get("x2");
-		int y2 = (Integer) params.get("y2");
-		
-		Boolean fill = (Boolean) params.get("fill");
-		
-		if( fill != null && fill ) 
-			g.fillRect(x1,y1,x2,y2);
-		else 
-			g.drawRect(x1,y1,x2,y2);
-	}
-}
-
-final class Oval extends Tool {
-	
-	Oval(String name){
-		super(name);
-	}
-	
-	void draw(Graphics g, Map<String, Object> params) {
-		super.draw(g,params);
-		int x1 = (Integer) params.get("x1");
-		int y1 = (Integer) params.get("y1");
-		int x2 = (Integer) params.get("x2");
-		int y2 = (Integer) params.get("y2");
-		
-		Boolean fill = (Boolean) params.get("fill");
-		
-		if( fill != null && fill ) 
-			g.fillOval(x1,y1,x2,y2);
-		else 
-			g.drawOval(x1,y1,x2,y2);
-	}
 }
 
 //src : dzone.com/articles/unselect-all-toggle-buttons
@@ -333,7 +171,7 @@ class ToolButtonGroup extends ButtonGroup {
 	}
 
 	interface ToolButtonListener{
-		void onSelection(String toolTitle);
+		void onSelection(String selectedTool);
 	}
 }
 
