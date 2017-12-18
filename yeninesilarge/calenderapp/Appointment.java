@@ -1,14 +1,11 @@
+package yeninesilarge.calenderapp;
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package yeninesilarge.calendarapp;
-
-/**
- *
- * @author nskmlylm
- */
+     Enes Kamil YILMAZ
+    FSM Vakıf University
+    Computer Engineering
+        3rd Grade
+        1521221039
+                        */
 abstract class Appointment {
     String desc;
     abstract boolean occursOn(int d, int m, int y);
@@ -22,7 +19,7 @@ abstract class Appointment {
         System.out.printf(" %s%n %s%n %s%n", d, m, n);
     }
 }
-class Daily extends Appointment {
+class Daily extends Appointment { //bizde yok
     public Daily(String s) {
         desc = "Every day -- "+s;
     }

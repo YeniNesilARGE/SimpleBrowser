@@ -1,21 +1,26 @@
-package calendarapp;
+package yeninesilarge.calenderapp;
 /*
- Enes Kamil YILMAZ
- FSM Vakıf University
- Computer Engineering
- 3rd Grade
- 1521221039
- */
-
+     Enes Kamil YILMAZ
+    FSM Vakıf University
+    Computer Engineering
+        3rd Grade
+        1521221039
+                        */
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import javax.swing.table.DefaultTableModel;
@@ -23,8 +28,11 @@ import javax.swing.Timer;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.imageio.ImageIO;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -35,21 +43,21 @@ public class CalendarApp extends javax.swing.JFrame {
 
     DefaultTableModel dtm;
     DefaultListModel dlm;
-    private int[] daysInMonth = new int[]{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     String[] months = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
     private GregorianCalendar cal;
-    private Object[] days = new Object[50];
-    int realYear, realMonth, realDay, currentYear, currentMonth;
+    static int realYear, realMonth, realDay, currentDay, currentYear, currentMonth;
     public static Collection<Agenda> data = new HashSet<>();
-    static String choosenDate, day2, month2, year2;
+    static String choosenDate, day2, month2, year2, irlDate;
     String boostTime;
     boolean found = true;
     final static String LINE_SEP = System.getProperty("line.separator"), TAB = "\\t", specialSep = ",   ";
-    static File f = new File("src", "Agenda.txt");;
+    static String txtName = "Agenda.txt";
+    static File f = new File(txtName);
+    //File img1 = new File("C:\\Users\\nskml\\Desktop\\2.jpg");
     List<Long> IDs = new ArrayList<>();
     List<Agenda> Agendas = new ArrayList<>();
 
-    public CalendarApp() {
+    public CalendarApp() throws IOException {
         initComponents();
         String[] columns = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
         dtm = new DefaultTableModel(null, columns);
@@ -61,7 +69,7 @@ public class CalendarApp extends javax.swing.JFrame {
         this.setTitle("                                                        "
                 + "                                                Calendar");
         this.setResizable(false);
-
+        
         //No resize/reorder
         calendarTable.getTableHeader().setResizingAllowed(false);
         calendarTable.getTableHeader().setReorderingAllowed(false);
@@ -84,12 +92,11 @@ public class CalendarApp extends javax.swing.JFrame {
         currentYear = realYear;
 
         //Set date and time labels
-        date.setText(realDay + "." + (realMonth + 1) + "." + realYear);
-
+        irlDate = realDay + "." + (realMonth + 1) + "." + realYear;
+        date.setText(irlDate);
+        
         Timer timer = new Timer(500, (ActionEvent e) -> {
-            f = new File("src", "Agenda.txt");
             tickTock();//saati günceller.
-            readAgenda();
             calendarTable.setDefaultRenderer(calendarTable.getColumnClass(0), new CalendarRenderer());
             refreshCalendar(currentMonth, currentYear);
         });
@@ -97,9 +104,35 @@ public class CalendarApp extends javax.swing.JFrame {
         timer.setCoalesce(true);
         timer.setInitialDelay(0);
         timer.start();
+        if (!f.exists()) {
+            JOptionPane.showMessageDialog(this, "Old txt file not found.\n Creating new one.", "Error", JOptionPane.ERROR_MESSAGE);
+            List<String> lines = Arrays.asList("199314857,   Event,   Programming Exam,   16.12.2017,   false,   10.00,   12.00,   Red,   C109,   WORK HARD,   12 day before",
+                    "304556711,   Event,   Study operating systems,   21.12.2017,   true,   -,   -,   Grey,   -,   Pdf 8 and 9,   1 week before",
+                    "899815102,   Event,   Finals Starting,   4.1.2018,   true,   10.00,   12.00,   Red,   -,   WORK HARD,   None",
+                    "438041405,   Event,   Last day of semester holiday,   12.2.2018,   true,   -,   -,   Red,   -,   GG,   None",
+                    "523459998,   Event,   Exam,   10.1.2018,   false,   12.00,   14.00,   Red,   C109,   WORK HARD,   None",
+                    "406702748,   Event,   Exam,   11.1.2018,   false,   10.00,   12.00,   Red,   D107,   WORK HARD,   None",
+                    "561304554,   Event,   Exam,   13.1.2018,   false,   10.00,   12.00,   Red,   B121,   WORK HARD,   None",
+                    "784797509,   Event,   Study sum,   21.12.2017,   false,   10.00,   12.00,   Grey,   -,   WORK HARD,   None",
+                    "620867157,   Event,   Study,   3.1.2018,   true,   10.00,   12.00,   Green,   -,   WORK HARD,   None",
+                    "367696710,   Event,   Finals over boi. Go home...,   13.1.2018,   false,   15.00,   18.00,   Blue,   -,   -,   None",
+                    "97106890,   Anniversary,   New Year,   1.1.2017,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "21085447,   Anniversary,   New Year,   1.1.2018,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "95113693,   Anniversary,   New Year,   1.1.2019,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "90362170,   Anniversary,   New Year,   1.1.2020,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "23200431,   Anniversary,   New Year,   1.1.2021,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "38838585,   Anniversary,   New Year,   1.1.2022,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "18476117,   Anniversary,   New Year,   1.1.2023,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "76574886,   Anniversary,   New Year,   1.1.2024,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "40267471,   Anniversary,   New Year,   1.1.2025,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "20792965,   Anniversary,   New Year,   1.1.2026,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
+                    "26700604,   Anniversary,   New Year,   1.1.2027,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before");
+            Path file = Paths.get("Agenda.txt");
+            Files.write(file, lines, Charset.forName("Cp1254"));
+        }
 
         //Populate table
-        for (int i = realYear - 50; i <= realYear + 50; i++) {
+        for (int i = realYear; i <= realYear + 10; i++) {
             cmbYear.addItem(String.valueOf(i));
         }
 
@@ -135,6 +168,9 @@ public class CalendarApp extends javax.swing.JFrame {
     }
 
     static void readLine(String line) { //ilk
+        if (line.equals("")) {
+            //boş satır varsa birşey yapma
+        }else{
         String[] satır = line.split(",   ");
         long id = Long.parseLong(satır[0]);
         String a = satır[1];
@@ -151,6 +187,7 @@ public class CalendarApp extends javax.swing.JFrame {
         
         Agenda agenda = new Agenda(id,a, b, c, c22, d, e, f, g, h, j);
         data.add(agenda);
+        }
     }
 
     class CalendarRenderer extends DefaultTableCellRenderer { //haftasonlarını, bugünün tarihini ve agenda değeri olan tarihleri boyar.
@@ -189,19 +226,52 @@ public class CalendarApp extends javax.swing.JFrame {
                     }
                     int m = Integer.parseInt(month);
                     month = months[m - 1];
-                    
-                    if (x.color.equals("Red") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
-                        setBackground(new Color(255, 51, 0));
-                    }
-                    if (getBackground().toString().equals("java.awt.Color[r=255,g=51,b=0]")) {
-                        //kırmızı renk varsa başka renk koyma
+
+                    if (x.eventType.equals("Anniversary")) {
+                        if (x.color.equals("Red") && value.toString().equals(day) && month.equals(txtMonth.getText())) {
+                            setBackground(new Color(255, 51, 0));
+                        }
+                        if (getBackground().toString().equals("java.awt.Color[r=255,g=51,b=0]")) {
+                            //kırmızı renk varsa başka renk koyma
+                        } else {
+                            if (x.color.equals("Blue") && value.toString().equals(day) && month.equals(txtMonth.getText())) {
+                                setBackground(new Color(51, 102, 255));
+                            } else if (x.color.equals("Green") && value.toString().equals(day) && month.equals(txtMonth.getText())) {
+                                setBackground(new Color(102, 255, 51));
+                            } else if (x.color.equals("Grey") && value.toString().equals(day) && month.equals(txtMonth.getText())) {
+                                setBackground(new Color(128, 128, 128));
+                            }
+                        }
+                    } else if (x.eventType.equals("Birtday")) {
+                        if (x.color.equals("Red") && value.toString().equals(day) && month.equals(txtMonth.getText())) {
+                            setBackground(new Color(255, 51, 0));
+                        }
+                        if (getBackground().toString().equals("java.awt.Color[r=255,g=51,b=0]")) {
+                            //kırmızı renk varsa başka renk koyma
+                        } else {
+                            if (x.color.equals("Blue") && value.toString().equals(day) && month.equals(txtMonth.getText())) {
+                                setBackground(new Color(51, 102, 255));
+                            } else if (x.color.equals("Green") && value.toString().equals(day) && month.equals(txtMonth.getText())) {
+                                setBackground(new Color(102, 255, 51));
+                            } else if (x.color.equals("Grey") && value.toString().equals(day) && month.equals(txtMonth.getText())) {
+                                setBackground(new Color(128, 128, 128));
+                            }
+                        }
                     } else {
-                        if (x.color.equals("Blue") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
-                            setBackground(new Color(51, 102, 255));
-                        } else if (x.color.equals("Green") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
-                            setBackground(new Color(102, 255, 51));
-                        } else if (x.color.equals("Grey") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
-                            setBackground(new Color(128, 128, 128));
+
+                        if (x.color.equals("Red") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
+                            setBackground(new Color(255, 51, 0));
+                        }
+                        if (getBackground().toString().equals("java.awt.Color[r=255,g=51,b=0]")) {
+                            //kırmızı renk varsa başka renk koyma
+                        } else {
+                            if (x.color.equals("Blue") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
+                                setBackground(new Color(51, 102, 255));
+                            } else if (x.color.equals("Green") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
+                                setBackground(new Color(102, 255, 51));
+                            } else if (x.color.equals("Grey") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
+                                setBackground(new Color(128, 128, 128));
+                            }
                         }
                     }
                 }
@@ -217,11 +287,11 @@ public class CalendarApp extends javax.swing.JFrame {
         for (Agenda x : data) {
             if (date.getText().equals(x.date)) {
                 f = true;
-               if (dlm.contains(x.eventName.toString() + " for day long") || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour) ) {
+               if (dlm.contains(x.eventName.toString() ) || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour) ) {
                         //içerde zaten varsa ekleme yapma
                     } else {
                         if (x.isAllDay) {
-                            dlm.addElement(x.eventName.toString() + " for day long");
+                            dlm.addElement(x.eventName.toString() );
                         } else {
                             dlm.addElement(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour);
                         }
@@ -231,7 +301,7 @@ public class CalendarApp extends javax.swing.JFrame {
         }
         if (!f) {
             dlm.clear();
-            dlm.addElement("What are you want to do?");
+            dlm.addElement("What would you like to do today?");
         }
 
     }
@@ -242,10 +312,10 @@ public class CalendarApp extends javax.swing.JFrame {
         //Allow/disallow buttons
         monthBack.setEnabled(true);
         monthForw.setEnabled(true);
-        if (month == 0 && year <= realYear - 10) {
+        if (month == 0 && year <= realYear) {
             monthBack.setEnabled(false);
         } //Too early
-        if (month == 11 && year >= realYear + 50) {
+        if (month == 11 && year >= realYear + 10) {
             monthForw.setEnabled(false);
         } //Too late
         txtMonth.setText(months[month]); //Refresh the month label (at the top)
@@ -275,92 +345,26 @@ public class CalendarApp extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        calendarTable = new javax.swing.JTable();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        agendaList = new javax.swing.JList();
-        monthBack = new javax.swing.JButton();
-        monthForw = new javax.swing.JButton();
-        add2Agenda = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
-        date = new javax.swing.JLabel();
-        time = new javax.swing.JLabel();
-        cmbYear = new javax.swing.JComboBox();
-        txtMonth = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
         go2Today = new javax.swing.JButton();
         timeBooster = new javax.swing.JButton();
         back2Normal = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        calendarTable = new javax.swing.JTable();
+        monthBack = new javax.swing.JButton();
+        txtMonth = new javax.swing.JLabel();
+        monthForw = new javax.swing.JButton();
+        cmbYear = new javax.swing.JComboBox();
+        jLabel2 = new javax.swing.JLabel();
+        date = new javax.swing.JLabel();
+        time = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        agendaList = new javax.swing.JList();
+        jLabel1 = new javax.swing.JLabel();
+        add2Agenda = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        calendarTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, "1", "2", "3", "4", "5"},
-                {"6", "7", "8", "9", "10", "11", "12"},
-                {"13", "14", "15", "16", "17", "18", "19"},
-                {"20", "21", "22", "23", "24", "25", "26"},
-                {"27", "28", "29", "30", null, null, null}
-            },
-            new String [] {
-                "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
-            }
-        ));
-        calendarTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                calendarTableMousePressed(evt);
-            }
-        });
-        jScrollPane1.setViewportView(calendarTable);
-
-        agendaList.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                agendaListMouseClicked(evt);
-            }
-        });
-        jScrollPane2.setViewportView(agendaList);
-
-        monthBack.setText("<");
-        monthBack.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                monthBackActionPerformed(evt);
-            }
-        });
-
-        monthForw.setText(">");
-        monthForw.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                monthForwActionPerformed(evt);
-            }
-        });
-
-        add2Agenda.setText("+");
-        add2Agenda.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                add2AgendaActionPerformed(evt);
-            }
-        });
-
-        jLabel1.setText("Agenda");
-
-        date.setText("12.01.2018");
-
-        time.setText("12:43:07");
-
-        cmbYear.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbYearİtemStateChanged(evt);
-            }
-        });
-        cmbYear.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbYearActionPerformed(evt);
-            }
-        });
-
-        txtMonth.setText("Month");
-
-        jLabel2.setText("Year :");
+        setBackground(java.awt.Color.darkGray);
 
         go2Today.setText("Go to Today");
         go2Today.addActionListener(new java.awt.event.ActionListener() {
@@ -383,80 +387,167 @@ public class CalendarApp extends javax.swing.JFrame {
             }
         });
 
+        calendarTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, "1", "2", "3", "4", "5"},
+                {"6", "7", "8", "9", "10", "11", "12"},
+                {"13", "14", "15", "16", "17", "18", "19"},
+                {"20", "21", "22", "23", "24", "25", "26"},
+                {"27", "28", "29", "30", null, null, null}
+            },
+            new String [] {
+                "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+            }
+        ));
+        calendarTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                calendarTableMousePressed(evt);
+            }
+        });
+        jScrollPane1.setViewportView(calendarTable);
+
+        monthBack.setText("<");
+        monthBack.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                monthBackActionPerformed(evt);
+            }
+        });
+
+        txtMonth.setText("Month");
+
+        monthForw.setText(">");
+        monthForw.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                monthForwActionPerformed(evt);
+            }
+        });
+
+        cmbYear.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cmbYearİtemStateChanged(evt);
+            }
+        });
+        cmbYear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbYearActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setText("Year :");
+
+        date.setText("12.01.2018");
+
+        time.setText("12:43:07");
+
+        agendaList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                agendaListMouseClicked(evt);
+            }
+        });
+        jScrollPane2.setViewportView(agendaList);
+
+        jLabel1.setText("Agenda");
+
+        add2Agenda.setText("+");
+        add2Agenda.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                add2AgendaActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(154, 154, 154)
+                .addComponent(monthBack)
+                .addGap(45, 45, 45)
+                .addComponent(txtMonth, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(27, 27, 27)
+                .addComponent(monthForw)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(47, 47, 47)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(timeBooster)
+                        .addGap(18, 18, 18)
+                        .addComponent(back2Normal)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel2)
+                                .addGap(24, 24, 24)
+                                .addComponent(cmbYear, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 441, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(24, 24, 24)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(add2Agenda, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel1)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(date)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(time)))
+                        .addGap(0, 0, Short.MAX_VALUE))))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(go2Today)
+                .addGap(582, 582, 582))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(monthForw)
+                                    .addComponent(txtMonth))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                .addComponent(monthBack)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(14, 14, 14)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(date)
+                            .addComponent(time))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbYear, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(add2Agenda)
+                    .addComponent(go2Today))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(timeBooster)
+                    .addComponent(back2Normal))
+                .addGap(58, 58, 58))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(146, 146, 146)
-                        .addComponent(monthBack)
-                        .addGap(50, 50, 50)
-                        .addComponent(txtMonth, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(monthForw))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(38, 38, 38)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 441, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(17, 17, 17)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(timeBooster)
-                                .addGap(18, 18, 18)
-                                .addComponent(back2Normal))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(go2Today)
-                                .addGap(225, 225, 225)
-                                .addComponent(jLabel2)
-                                .addGap(18, 18, 18)
-                                .addComponent(cmbYear, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addGap(21, 21, 21)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(add2Agenda, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(date)
-                            .addGap(18, 18, 18)
-                            .addComponent(time))))
-                .addContainerGap(22, Short.MAX_VALUE))
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(38, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(15, 15, 15)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(monthForw)
-                            .addComponent(txtMonth)
-                            .addComponent(monthBack))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(17, 17, 17)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(date)
-                            .addComponent(time))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane2)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(go2Today)
-                    .addComponent(cmbYear, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2)
-                    .addComponent(add2Agenda))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(timeBooster)
-                    .addComponent(back2Normal))
-                .addGap(0, 15, Short.MAX_VALUE))
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -654,7 +745,11 @@ public class CalendarApp extends javax.swing.JFrame {
 
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new CalendarApp().setVisible(true);
+                try {
+                    new CalendarApp().setVisible(true);
+                } catch (IOException ex) {
+                    Logger.getLogger(CalendarApp.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
 
@@ -670,6 +765,7 @@ public class CalendarApp extends javax.swing.JFrame {
     private javax.swing.JButton go2Today;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JButton monthBack;

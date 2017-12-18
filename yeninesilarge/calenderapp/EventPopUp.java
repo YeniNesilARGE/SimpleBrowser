@@ -1,12 +1,11 @@
-package yeninesilarge.calendarapp;
+package yeninesilarge.calenderapp;
 /*
- Enes Kamil YILMAZ
- FSM Vakıf University
- Computer Engineering
- 3rd Grade
- 1521221039
- */
-
+     Enes Kamil YILMAZ
+    FSM Vakıf University
+    Computer Engineering
+        3rd Grade
+        1521221039
+                        */
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedWriter;
@@ -24,7 +23,6 @@ public class EventPopUp extends javax.swing.JFrame {
     static boolean isOpen;
     String timefrom = "-", timeto = "-";
     String hourf, minf, hour2, min2;
-    
     static final String LINE_SEP = System.getProperty("line.separator");
 
     public EventPopUp() {
@@ -40,7 +38,7 @@ public class EventPopUp extends javax.swing.JFrame {
                 isOpen = false;
             }
         });
-
+        
         chDate.setText("Choosen Date : " + CalendarApp.choosenDate);
 
         this.setResizable(false);
@@ -258,9 +256,7 @@ public class EventPopUp extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     void addToData() throws IOException {
-        long id = 0;
-        Random generator = new Random(); 
-        id = generator.nextInt(99999999) + 1;
+        
         if (chcbxAllDay.isSelected()) {
             allday = true;
             timefrom = "-";
@@ -274,32 +270,48 @@ public class EventPopUp extends javax.swing.JFrame {
         if (txtLoc.equals("...Location")){
             txtLoc.setText("-");
         }
-        File f = new File("src", "Agenda.txt");
+        File f = new File("Agenda.txt");
         FileWriter fw = new FileWriter(f, true);
         BufferedWriter bw = new BufferedWriter(fw);
-       
+
+        long id = 0;
+        Random generator = new Random();
+        id = generator.nextInt(99999999) + 1;
+
+        int yıl = Integer.parseInt(CalendarApp.choosenDate.substring(CalendarApp.choosenDate.length() - 2, CalendarApp.choosenDate.length()));
+
         if (chkbxEvent.isSelected()) {
-            bw.write(LINE_SEP +id+ ",   " + "Event" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
+            bw.write(LINE_SEP + id + ",   " + "Event" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
                     + ",   " + txtLoc.getText().toString() + ",   " + txtDescp.getText().toString() + ",   " + cmbReminder.getSelectedItem().toString());
             bw.close();
             System.out.println("Event eklendi");
         } else if (chckbxBirtday.isSelected()) {
-            bw.write(LINE_SEP +id+ ",   " + "Birtday" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
-                    + ",   " + txtLoc.getText().toString() + ",   " + txtDescp.getText().toString() + ",   " + cmbReminder.getSelectedItem().toString());
+            for (yıl = 17; yıl <= 27; yıl++) {
+                id = generator.nextInt(99999999) + 1;
+                CalendarApp.choosenDate = CalendarApp.choosenDate.substring(0, CalendarApp.choosenDate.length() - 2) + yıl;
+                bw.write(LINE_SEP + id + ",   " + "Birtday" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
+                        + ",   " + "" + ",   " + txtDescp.getText().toString() + ",   " + cmbReminder.getSelectedItem().toString());
+            }
+
             bw.close();
 
-            System.out.println("Birtday eklendi");
+            System.out.println("Birtdayler eklendi");
         } else if (chckbxAnniversary.isSelected()) {
-            bw.write(LINE_SEP +id+ ",   " + "Anniversary" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
-                    + ",   " + txtLoc.getText().toString() + ",   " + txtDescp.getText().toString() + ",   " + cmbReminder.getSelectedItem().toString());
+            for (yıl = 17; yıl <= 27; yıl++) {
+                id = generator.nextInt(99999999) + 1;
+                CalendarApp.choosenDate = CalendarApp.choosenDate.substring(0, CalendarApp.choosenDate.length() - 2) + yıl;
+                bw.write(LINE_SEP + id + ",   " + "Anniversary" + ",   " + txtEventName.getText().toString() + ",   " + CalendarApp.choosenDate + ",   " + allday + ",   " + timefrom + ",   " + timeto + ",   " + cmbColor.getSelectedItem().toString()
+                        + ",   " + txtLoc.getText().toString() + ",   " + txtDescp.getText().toString() + ",   " + cmbReminder.getSelectedItem().toString());
+            }
             bw.close();
-            System.out.println("Anniversary eklendi");
+            System.out.println("Anniversaryler eklendi");
         }
-       
+
     }
 
     private void timeFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeFromActionPerformed
-        timefrom = JOptionPane.showInputDialog(this, "Please log in to the appropriate format => Example -> 12:45 , 03:30", "Enter time from...", JOptionPane.INFORMATION_MESSAGE);
+       // timefrom = (String)JOptionPane.showInputDialog(this, "Please log in to the appropriate format => Example -> 12:45 , 03:30", "Enter time from...", JOptionPane.INFORMATION_MESSAGE,null,null,CalendarApp.choosenDate+",");
+        timefrom = JOptionPane.showInputDialog(this, "Please log in to the appropriate format =>Example : 13:45 or 03:30", "Enter time from...", JOptionPane.INFORMATION_MESSAGE);
         int h = 0, m = 0;
         if (timefrom.length() == 5) {
             hourf = timefrom.substring(0, 2);
@@ -326,10 +338,11 @@ public class EventPopUp extends javax.swing.JFrame {
 
         if (chkbxEvent.isSelected() || chckbxBirtday.isSelected() || chckbxAnniversary.isSelected()) {
             if (!txtEventName.getText().equals("...Event Name")) {
+                
                 try {
                     addToData();
                     CalendarApp.readAgenda();
-                    File f = new File("src", "Agenda.txt");
+                    File f = new File(CalendarApp.txtName);
                     FileWriter fw = new FileWriter(f, true);
                     BufferedWriter bw = new BufferedWriter(fw);
                     bw.write(" ");
@@ -433,6 +446,7 @@ public class EventPopUp extends javax.swing.JFrame {
 
     private void timeToActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeToActionPerformed
         int h = 0, m = 0;
+        //timeto = (String)JOptionPane.showInputDialog(this, "Please log in to the appropriate format => Example -> 12:45 ,03:30", "Enter time from...", JOptionPane.INFORMATION_MESSAGE,null,null,CalendarApp.choosenDate+",");
         timeto = JOptionPane.showInputDialog(this, "Please log in to the appropriate format =>Example : 13:45 or 03:30", "Enter time from...", JOptionPane.INFORMATION_MESSAGE);
         if (timeto.length() == 5) {
             hour2 = timefrom.substring(0, 2);
