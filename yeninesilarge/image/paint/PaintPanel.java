@@ -13,7 +13,11 @@ import java.util.HashMap;
 public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonListener{
 	ImagePanel pnlImage;
 	Tool selectedTool;
-	
+
+	Map<String,Tool> toolMap;
+
+	static final String TOOL_TRIANGLE = "Triangle", TOOL_LINE = "Line", TOOL_OVAL = "Circle", TOOL_RECTANGLE = "Rectangle", TOOL_SELECT = "Select" ;
+
 	public static JFrame buildFrame(String title, JPanel panel, int x, int y, int width, int height){
 		JFrame frame = new JFrame(title);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
@@ -51,6 +55,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 	private void init(){
 		setLayout(new GridBagLayout());
 
+		toolMap = new HashMap<>();
+
 		// --------- TOOLS ---------------
 		GridBagConstraints constTools = new GridBagConstraints();
 		constTools.gridx = 0;
@@ -68,11 +74,23 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		pnlTools.setLayout(new BoxLayout(pnlTools, BoxLayout.PAGE_AXIS));
 
 		ButtonGroup groupDrawing = new ToolButtonGroup(this);
-		makeTool(pnlTools, groupDrawing, "Select");
-		makeTool(pnlTools, groupDrawing, "Line");
-		makeTool(pnlTools, groupDrawing, "Triangle");
-		makeTool(pnlTools, groupDrawing, "Rectangle");
-		makeTool(pnlTools, groupDrawing, "Circle");
+		makeTool(pnlTools, groupDrawing, TOOL_SELECT);
+		makeTool(pnlTools, groupDrawing, TOOL_LINE);
+		makeTool(pnlTools, groupDrawing, TOOL_TRIANGLE);
+		makeTool(pnlTools, groupDrawing, TOOL_RECTANGLE);
+		makeTool(pnlTools, groupDrawing, TOOL_OVAL); 
+
+		Tool line = new Line(TOOL_LINE);
+		toolMap.put(TOOL_LINE, line);
+
+		Tool triangle = new Triangle(TOOL_TRIANGLE);
+		toolMap.put(TOOL_TRIANGLE, triangle);
+
+		Tool rectangle = new Rectangle(TOOL_RECTANGLE);
+		toolMap.put(TOOL_RECTANGLE, rectangle);
+
+		Tool oval = new Oval(TOOL_OVAL);
+		toolMap.put(TOOL_OVAL, oval);
 
 		// --------- IMAGE ---------------
 		GridBagConstraints constImage= new GridBagConstraints();
@@ -83,6 +101,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
         constImage.fill = GridBagConstraints.BOTH;
 
 		pnlImage = new ImagePanel();
+		pnlImage.addMouseListener(mouseListener);
 		File sampleFile = new File("yeninesilarge/images","dog.jpg");
 		try { pnlImage.setImage(sampleFile); } 
 		catch(IOException e) { e.printStackTrace(); };
@@ -105,21 +124,59 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 
 	}
 	
-	@Override
-	public void onSelection(String toolTitle){
-		selectedTool = new Line(toolTitle);
-		System.out.println("listened-"+toolTitle);
-	}
-
 	private JToggleButton makeTool(JPanel tools, ButtonGroup group, String name){
 		tools.add(Box.createRigidArea(new Dimension(5,5)));
 		JToggleButton tool = new JToggleButton(name);
 		tool.setAlignmentX(Component.CENTER_ALIGNMENT);	
-		tool.setActionCommand(name); //stackoverflow.com/questions/27916896/what-is-an-action-command-that-is-set-by-setactioncommand
+		tool.setActionCommand(name); // stackoverflow.com/questions/27916896/what-is-an-action-command-that-is-set-by-setactioncommand
 		tools.add(tool);
 		group.add(tool);
 		return tool;
 	}
+
+	@Override
+	public void onSelection(String toolTitle){
+		selectedTool = toolMap.get(toolTitle);
+	}
+
+	private MouseListener mouseListener = new MouseListener() {
+		public void mousePressed(MouseEvent e) {
+
+		}
+		public void mouseReleased(MouseEvent e) {
+
+		}
+		public void mouseEntered(MouseEvent e) {
+
+		}
+		public void mouseExited(MouseEvent e) {
+
+		}
+		public void mouseClicked(MouseEvent e) {
+			//Testing
+			Point coordinates = coordinatesFromPoint(e.getComponent());
+			
+			Tool t = toolMap.get(TOOL_LINE);
+			Map<String, Object> params = new HashMap<>();
+			params.put("x1", (int) coordinates.getX() );
+			params.put("y1", (int) coordinates.getY() );
+			params.put("x2", (int) coordinates.getX());
+			params.put("y2", (int) coordinates.getY() + 50);
+			params.put("fill", true); 
+			params.put("color", Color.YELLOW);
+
+			t.draw(e.getComponent(), params);
+		}
+	};
+
+	//stackoverflow.com/questions/23730793/how-to-get-image-pixel-coordinates-in-java-by-pointing-mouse-to-a-specific-poin
+	Point coordinatesFromPoint(Component comp){
+		PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+		Point p = new Point(pointerInfo.getLocation());
+		SwingUtilities.convertPointFromScreen(p, comp);
+		return p;
+	}
+	
 	
 }
 //should draw(Graphics,Map) throws NullPointerException? -Properties can be null-
@@ -130,6 +187,11 @@ abstract class Tool {
 		if( color != null ) {
 			g.setColor(color);
 		}
+	}
+
+	void draw(Component comp, Map<String, Object> params) {
+		Graphics g = comp.getGraphics();
+		draw(g, params);
 	}
 	
 	Tool(String name){
@@ -144,8 +206,8 @@ abstract class Tool {
 	@Override
 	public int hashCode() {
 		return name.hashCode();
+		}
 	}
-}
 
 class Text extends Tool {
 
@@ -166,7 +228,7 @@ class Text extends Tool {
 	}
 }
 
-class Line extends Tool {
+final class Line extends Tool {
 	
 	Line(String name){
 		super(name);
@@ -183,7 +245,7 @@ class Line extends Tool {
 	}
 }
 
-class Triangle extends Tool {
+final class Triangle extends Tool {
 	
 	Triangle(String name){
 		super(name);
@@ -205,7 +267,7 @@ class Triangle extends Tool {
 	}
 }
 
-class Rectangle extends Tool {
+final class Rectangle extends Tool {
 	
 	Rectangle(String name){
 		super(name);
@@ -227,7 +289,7 @@ class Rectangle extends Tool {
 	}
 }
 
-class Oval extends Tool {
+final class Oval extends Tool {
 	
 	Oval(String name){
 		super(name);
@@ -260,7 +322,6 @@ class ToolButtonGroup extends ButtonGroup {
 
 	@Override
 	public void setSelected(ButtonModel model, boolean selected) {
-	System.out.println("setSelected-");
 		if (selected) {
 			super.setSelected(model, selected);
 			String actionCommand = model.getActionCommand();
