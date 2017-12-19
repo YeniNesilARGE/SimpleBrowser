@@ -119,13 +119,28 @@ class Rectangle extends Tool {
 		int y1 = (Integer) params.get("y1");
 		int x2 = (Integer) params.get("x2");
 		int y2 = (Integer) params.get("y2");
+
+		if ( x2 < x1 ) {
+			int temp = x1;
+			x1 = x2;
+			x2 = temp;
+		}	
+
+		if ( y2 < y1 ) {
+			int temp = y1;
+			y1 = y2;
+			y2 = temp;
+		}	
+
+		int width = x2 - x1 ;
+		int height = y2 -y1 ;
 		
 		Boolean fill = (Boolean) params.get("fill");
 		
 		if( fill != null && fill ) 
-			g.fillRect(x1,y1,x2,y2);
+			g.fillRect(x1,y1,width,height);
 		else 
-			g.drawRect(x1,y1,x2,y2);
+			g.drawRect(x1,y1,width,height);
 	}
 }
 
@@ -141,13 +156,28 @@ class Oval extends Tool {
 		int y1 = (Integer) params.get("y1");
 		int x2 = (Integer) params.get("x2");
 		int y2 = (Integer) params.get("y2");
+
+		if ( x2 < x1 ) {
+			int temp = x1;
+			x1 = x2;
+			x2 = temp;
+		}	
+
+		if ( y2 < y1 ) {
+			int temp = y1;
+			y1 = y2;
+			y2 = temp;
+		}	
+
+		int width = x2 - x1;
+		int height = y2 -y1;
 		
 		Boolean fill = (Boolean) params.get("fill");
 		
 		if( fill != null && fill ) 
-			g.fillOval(x1,y1,x2,y2);
+			g.fillOval(x1,y1, width, height);
 		else 
-			g.drawOval(x1,y1,x2,y2);
+			g.drawOval(x1,y1, width, height);
 	}
 }
 

@@ -109,11 +109,35 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 	}
 
 	private MouseListener mouseListener = new MouseListener() {
-		public void mousePressed(MouseEvent e) {
+		private int x1,x2,y1,y2;
 
+		public void mousePressed(MouseEvent e) {
+			Point coordinates = coordinatesFromPoint(e.getComponent());
+			x1 = (int) coordinates.getX();
+			y1 = (int) coordinates.getY();
+			x2 = -1; y2 = -1;
 		}
 		public void mouseReleased(MouseEvent e) {
+			if( x1 == -1 || y1 == -1 )  return; 
+	
+			Point coordinates = coordinatesFromPoint(e.getComponent());
+			x2 = (int) coordinates.getX();
+			y2 = (int) coordinates.getY();
 
+		
+
+			Tool t = ToolFactory.getInstance(selectedTool);
+			Map<String, Object> params = new HashMap<>();
+			params.put("x1", x1 );
+			params.put("y1", y1 );
+			params.put("x2", x2 );
+			params.put("y2", y2 );
+//			params.put("fill", true); 
+			params.put("color", Color.YELLOW);
+
+			t.draw(e.getComponent(), params);
+
+			x1 = -1; y1 = -1; x2 = -1; y2 = -1;
 		}
 		public void mouseEntered(MouseEvent e) {
 
@@ -122,19 +146,12 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 
 		}
 		public void mouseClicked(MouseEvent e) {
-			//Testing
-			Point coordinates = coordinatesFromPoint(e.getComponent());
 
-			Tool t = ToolFactory.getInstance(selectedTool);
-			Map<String, Object> params = new HashMap<>();
-			params.put("x1", (int) coordinates.getX() );
-			params.put("y1", (int) coordinates.getY() );
-			params.put("x2", (int) coordinates.getX());
-			params.put("y2", (int) coordinates.getY() + 50);
-			params.put("fill", true); 
-			params.put("color", Color.YELLOW);
+			if(selectedTool == null){
+				Graphics g = e.getComponent().getGraphics();
+				g.clearRect(0, 0, e.getComponent().getWidth(), e.getComponent().getHeight());
+			}		
 
-			t.draw(e.getComponent(), params);
 		}
 	};
 
