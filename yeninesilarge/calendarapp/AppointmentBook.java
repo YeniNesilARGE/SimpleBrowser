@@ -1,14 +1,11 @@
+package yeninesilarge.calendarapp;
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package calendarapp;
-
-/**
- *
- * @author nskmlylm
- */
+     Enes Kamil YILMAZ
+    FSM Vakıf University
+    Computer Engineering
+        3rd Grade
+        1521221039
+                        */
 import java.util.*;
 
 class AppointmentBook implements Runnable {
