@@ -1,4 +1,4 @@
-package yeninesilarge.calenderapp;
+package yeninesilarge.calendarapp;
 /*
      Enes Kamil YILMAZ
     FSM Vakıf University
