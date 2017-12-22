@@ -11,15 +11,16 @@ import java.awt.RenderingHints;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.util.Stack;
+import java.util.Map;
 
 import javax.imageio.*;
 import java.io.*;
 import java.awt.image.RenderedImage;
 
 public class PaintingPanel extends ImagePanel{
-	private Tool tool; //currently drawing image, mouse not realesed
-	private Stack<Tool> shapes; // undo  
-	private Stack<Tool> redo; // redo
+	private Map<String, Object> params; //currently drawing image, mouse not realesed
+	private Stack<Map<String,Object>> shapes; // undo  
+	private Stack<Map<String,Object>> redo; // redo
 
 	PaintingPanel() {
 		shapes = new Stack<>();
@@ -30,45 +31,34 @@ public class PaintingPanel extends ImagePanel{
 	public void paint(Graphics g){
 		super.paint(g);
 
-		for( Tool t : shapes ) {
-			t.draw(g);
+		for( Map<String, Object> params : shapes ) {
+			Tool t = ToolFactory.getInstance((String) params.get("tool"));
+			t.draw(g, params);
 		}
 	
-		if( tool != null ){
-			tool.draw(g);
+		if( params != null ){
+			Tool t = ToolFactory.getInstance((String) params.get("tool"));
+			t.draw(g, params);
 		}
 
 	}
 
-	public void addTool(Tool t){
-		shapes.push(t);
-		tool = null;
+	public void addDraw(Map params){
+		shapes.push(params);
+		params = null;
 		redo.clear();
 		repaint();
 	}
 	
-	public void setTool(Tool t) {
-		tool = t;
+	public void setParams(Map p) {
+		params = p;
 		repaint();
 	}
 
 	public void removeShapes(){
- Graphics2D g2d = getImage().createGraphics();
-
-    g2d.setColor(Color.black);
-    g2d.fillOval(0, 0, 100, 100);
-
-    g2d.dispose();
-
-try   { RenderedImage rendImage = getImage();
-
-    File file = new File("newimage.png");
-    ImageIO.write(rendImage, "png", file); } catch (Exception x){}
-
-/*
 		shapes.clear();
 		redo.clear();
-		tool = null;*/
+		params = null;
 		repaint();
 	}	
 

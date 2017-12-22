@@ -11,8 +11,6 @@ import java.util.HashMap;
 public abstract class Tool {
 	String name;
 
-	private Map<String, Object> params; 
-
 	public static final String TRIANGLE = "Triangle", 
 								LINE = "Line", 
 								TEXT = "Text", 
@@ -26,7 +24,6 @@ public abstract class Tool {
 
 	//todo setStroke();
 	void draw(Graphics g, Map<String,Object> params) {
-		this.params = params; // saving last used paramaters as local paramaters.
 		Color color = (Color) params.get("color");
 		if( color != null ) {
 			g.setColor(color);
@@ -36,15 +33,6 @@ public abstract class Tool {
 	void draw(Component comp, Map<String, Object> params) {
 		Graphics g = comp.getGraphics();
 		draw(g, params);
-	}
-	
-	// draw(Component) drawing shape with local parameter.
-	void draw(Graphics g) {
-		draw(g, params);
-	}
-	
-	void setParams(Map<String, Object> p) {
-		params = p;
 	}
 	
 	@Override
@@ -195,20 +183,7 @@ class Oval extends Tool {
 
 //stackoverflow.com/questions/26890747/java-abstract-factory-singleton
 class ToolFactory {
-	
-	public static Tool getInstance(String tool){
-		String packageName = Tool.class.getPackage().getName(); //all tools are in same package.
-	
-		Class c = Reflect.getClass(packageName, tool);
-		Constructor constructor = Reflect.getConstructor(c, String.class);
-		constructor.setAccessible(true); 
-		Tool t = (Tool) Reflect.newInstance(constructor, tool);
-		
-		return t;
-	}
-
-
-	/*static Map<String,Tool> map = new HashMap<>(); singleton
+	static Map<String,Tool> map = new HashMap<>(); //singleton
 
 	//it might not be available to java 10 and newer, illegal access.
 	public static Tool getInstance(String tool){
@@ -223,5 +198,5 @@ class ToolFactory {
 			map.put(tool, t);
 		}
 		return t;
-	}*/
+	}
 }

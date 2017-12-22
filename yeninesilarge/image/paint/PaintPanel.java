@@ -13,7 +13,8 @@ import javax.imageio.*;
 import java.awt.image.*;
 
 
-public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonListener{
+public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonListener,
+													KeyListener{
 	PaintingPanel pnlImage;
 	String selectedTool;
 
@@ -23,6 +24,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		frame.setContentPane(panel);
 		frame.setBounds(x,y,width,height);
 		//frame.pack();
+		frame.setFocusable(true); // needs by key listener
+		frame.addKeyListener( (KeyListener) panel); // key listener
 		frame.setVisible(true);
 		return frame;
 	}
@@ -131,7 +134,6 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 
 	private MouseInputAdapter mouseListener = new MouseInputAdapter() {
 		private int x1,x2,y1,y2;
-		private Tool tool;
 		private Map<String, Object> params;
 
 		@Override
@@ -141,12 +143,9 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			x1 = (int) coordinates.getX();
 			y1 = (int) coordinates.getY();						
 
-
-			tool = ToolFactory.getInstance(selectedTool);
 			// set x1,y1 in place of x2,y2 as default.
-			params = buildParams(tool.name, x1, y1, x1, y1, 
+			params = buildParams(selectedTool, x1, y1, x1, y1, 
 									null,null,null,false); 
-			tool.setParams(params);
  			
 		}
 
@@ -164,7 +163,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			params.put("x2", x2);
 			params.put("y2", y2);
 			
-			pnlImage.setTool(tool);
+			pnlImage.setParams(params);
 		}
 
 		@Override
@@ -174,7 +173,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			//we know that x2 and y2 is updating from mouseDragged event so 
 			//there is no meaning to catching those 2 points.
 
-			pnlImage.addTool(tool);
+			pnlImage.addDraw(params);
 		}
 
 	};
@@ -203,6 +202,18 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		params.put("fill", true); 
 		return params;
 	}
+
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if( e.getKeyChar() == 127 ){
+			System.out.println("dele basıldı");
+		}
+	}
+	
+	public void keyReleased(KeyEvent e) { }
+	public void keyTyped(KeyEvent e) { }
+	
 	
 	
 }
