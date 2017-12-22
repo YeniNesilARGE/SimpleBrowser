@@ -145,8 +145,9 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 
 			// set x1,y1 in place of x2,y2 as default.
 			params = buildParams(selectedTool, x1, y1, x1, y1, 
-									null,null,null,false); 
- 			
+								null,null,
+								new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{ 10.0f }, 0.0f), // test
+								false);  			
 		}
 
 		@Override
@@ -155,6 +156,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 
 			Component  c = e.getComponent();
 			Graphics g = c.getGraphics();
+
 
 			Point coordinates = coordinatesFromPoint(e.getComponent());
 			x2 = (int) coordinates.getX();
@@ -199,7 +201,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		params.put("color", c);
 		params.put("font", font);
 		params.put("stroke", s);
-		params.put("fill", true); 
+		params.put("fill", fill); 
 		return params;
 	}
 

@@ -33,12 +33,12 @@ public class PaintingPanel extends ImagePanel{
 
 		for( Map<String, Object> params : shapes ) {
 			Tool t = ToolFactory.getInstance((String) params.get("tool"));
-			t.draw(g, params);
+			t.operate(g, params);
 		}
 	
 		if( params != null ){
 			Tool t = ToolFactory.getInstance((String) params.get("tool"));
-			t.draw(g, params);
+			t.operate(g, params);
 		}
 
 	}

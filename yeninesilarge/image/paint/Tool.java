@@ -7,7 +7,7 @@ import java.awt.*;
 import java.util.Map;
 import java.util.HashMap;
 
-//should draw(Graphics,Map) throws NullPointerException? -Properties can be null-
+//should make(Graphics,Map) throws NullPointerException? -Properties can be null-
 public abstract class Tool {
 	String name;
 
@@ -22,17 +22,23 @@ public abstract class Tool {
 		name = tool;
 	}
 
-	//todo setStroke();
-	void draw(Graphics g, Map<String,Object> params) {
+	
+	void operate(Graphics g, Map<String,Object> params) {
+		Graphics2D g2 = (Graphics2D) g;
 		Color color = (Color) params.get("color");
 		if( color != null ) {
-			g.setColor(color);
+			g2.setColor(color);
+		}
+
+		Stroke stroke = (Stroke) params.get("stroke");
+		if( stroke != null ) {
+			g2.setStroke(stroke);
 		}
 	}
 
-	void draw(Component comp, Map<String, Object> params) {
+	void operate(Component comp, Map<String, Object> params) {
 		Graphics g = comp.getGraphics();
-		draw(g, params);
+		operate(g, params);
 	}
 	
 	@Override
@@ -54,8 +60,8 @@ class Text extends Tool {
 		super(tool);
 	}
 	
-	void draw(Graphics g, Map<String,Object> params) {
-		super.draw(g, params);
+	void operate(Graphics g, Map<String,Object> params) {
+		super.operate(g, params);
 		String str = (String) params.get("text");
 		int x = (Integer) params.get("x");
 		int y = (Integer) params.get("y");
@@ -73,8 +79,8 @@ class Line extends Tool {
 		super(tool);
 	}
 	
-	void draw(Graphics g, Map<String, Object> params) {
-		super.draw(g,params);
+	void operate(Graphics g, Map<String, Object> params) {
+		super.operate(g,params);
 		int x1 = (Integer) params.get("x1");
 		int y1 = (Integer) params.get("y1");
 		int x2 = (Integer) params.get("x2");
@@ -90,8 +96,8 @@ class Triangle extends Tool {
 		super(tool);
 	}
 	
-	void draw(Graphics g, Map<String, Object> params) {
-		super.draw(g,params);
+	void operate(Graphics g, Map<String, Object> params) {
+		super.operate(g,params);
 		int[] xPoints = (int[]) params.get("xPoints");
 		int[] yPoints = (int[]) params.get("yPoints");
 		
@@ -112,8 +118,8 @@ class Rectangle extends Tool {
 		super(tool);
 	}
 	
-	void draw(Graphics g, Map<String, Object> params) {
-		super.draw(g,params);
+	void operate(Graphics g, Map<String, Object> params) {
+		super.operate(g,params);
 		int x1 = (Integer) params.get("x1");
 		int y1 = (Integer) params.get("y1");
 		int x2 = (Integer) params.get("x2");
@@ -149,9 +155,9 @@ class Oval extends Tool {
 		super(tool);
 	}
 	
-	void draw(Graphics g, Map<String, Object> params) {
+	void operate(Graphics g, Map<String, Object> params) {
 		Graphics t = g.create();
-		super.draw(g,params);
+		super.operate(g,params);
 		int x1 = (Integer) params.get("x1");
 		int y1 = (Integer) params.get("y1");
 		int x2 = (Integer) params.get("x2");
