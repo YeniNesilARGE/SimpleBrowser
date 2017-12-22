@@ -1,20 +1,23 @@
 package yeninesilarge.image.paint;
 
-import yeninesilarge.image.ImagePanel;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.event.MouseInputAdapter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
 
+import javax.imageio.*;
+import java.awt.image.*;
+
 
 public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonListener{
-	ImagePanel pnlImage;
+	PaintingPanel pnlImage;
 	String selectedTool;
 
-	public static JFrame buildFrame(String title, JPanel panel, int x, int y, int width, int height){
+	public static JFrame buildFrame(String title, JPanel panel, int x, int y, int width, int height) {
 		JFrame frame = new JFrame(title);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
 		frame.setContentPane(panel);
@@ -61,6 +64,12 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		makeTool(pnlTools, groupDrawing, Tool.RECTANGLE);
 		makeTool(pnlTools, groupDrawing, Tool.OVAL); 
 
+		makeButton(pnlTools, null, "Clear").addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				pnlImage.removeShapes();
+			}
+		});
+
 		// --------- IMAGE ---------------
 		GridBagConstraints constImage= new GridBagConstraints();
 		constImage.gridx = 3;
@@ -69,8 +78,9 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
         constImage.gridheight = 9;
         constImage.fill = GridBagConstraints.BOTH;
 
-		pnlImage = new ImagePanel();
-		pnlImage.addMouseListener(mouseListener);
+		pnlImage = new PaintingPanel();
+		pnlImage.addMouseListener(mouseListener); // listens mouse pressed and released events
+		pnlImage.addMouseMotionListener(mouseListener); // listens mouse dragged event
 		File sampleFile = new File("yeninesilarge/images","dog.jpg");
 		try { pnlImage.setImage(sampleFile); } 
 		catch(IOException e) { e.printStackTrace(); };
@@ -93,14 +103,25 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 
 	}
 	
-	private JToggleButton makeTool(JPanel tools, ButtonGroup group, String name){
-		tools.add(Box.createRigidArea(new Dimension(5,5)));
+	private JToggleButton makeTool(JPanel panel, ButtonGroup group, String name){
+		panel.add(Box.createRigidArea(new Dimension(5,5)));
 		JToggleButton tool = new JToggleButton(name);
-		tool.setAlignmentX(Component.CENTER_ALIGNMENT);	
+		tool.setAlignmentX(Component.CENTER_ALIGNMENT);
 		tool.setActionCommand(name); // stackoverflow.com/questions/27916896/what-is-an-action-command-that-is-set-by-setactioncommand
-		tools.add(tool);
-		group.add(tool);
+		panel.add(tool);
+		if(group != null)
+			group.add(tool);
 		return tool;
+	}
+
+	private JButton makeButton(JPanel panel, ButtonGroup group, String name){
+		panel.add(Box.createRigidArea(new Dimension(5,5)));
+		JButton btn = new JButton(name);
+		btn.setAlignmentX(Component.CENTER_ALIGNMENT);	
+		panel.add(btn);
+		if(group != null)
+			group.add(btn);
+		return btn;
 	}
 
 	@Override
@@ -108,59 +129,79 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		this.selectedTool = selectedTool;
 	}
 
-	private MouseListener mouseListener = new MouseListener() {
+	private MouseInputAdapter mouseListener = new MouseInputAdapter() {
 		private int x1,x2,y1,y2;
+		private Tool tool;
+		private Map<String, Object> params;
 
+		@Override
 		public void mousePressed(MouseEvent e) {
+			if( selectedTool == null ) return;
 			Point coordinates = coordinatesFromPoint(e.getComponent());
 			x1 = (int) coordinates.getX();
-			y1 = (int) coordinates.getY();
-			x2 = -1; y2 = -1;
+			y1 = (int) coordinates.getY();						
+
+
+			tool = ToolFactory.getInstance(selectedTool);
+			// set x1,y1 in place of x2,y2 as default.
+			params = buildParams(tool.name, x1, y1, x1, y1, 
+									null,null,null,false); 
+			tool.setParams(params);
+ 			
 		}
-		public void mouseReleased(MouseEvent e) {
-			if( x1 == -1 || y1 == -1 )  return; 
-	
+
+		@Override
+		public void mouseDragged(MouseEvent e) {
+			if( selectedTool == null ) return;
+
+			Component  c = e.getComponent();
+			Graphics g = c.getGraphics();
+
 			Point coordinates = coordinatesFromPoint(e.getComponent());
 			x2 = (int) coordinates.getX();
-			y2 = (int) coordinates.getY();
-
+			y2 = (int) coordinates.getY();	
 		
-
-			Tool t = ToolFactory.getInstance(selectedTool);
-			Map<String, Object> params = new HashMap<>();
-			params.put("x1", x1 );
-			params.put("y1", y1 );
-			params.put("x2", x2 );
-			params.put("y2", y2 );
-//			params.put("fill", true); 
-			params.put("color", Color.YELLOW);
-
-			t.draw(e.getComponent(), params);
-
-			x1 = -1; y1 = -1; x2 = -1; y2 = -1;
+			params.put("x2", x2);
+			params.put("y2", y2);
+			
+			pnlImage.setTool(tool);
 		}
-		public void mouseEntered(MouseEvent e) {
 
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			if( selectedTool == null ) return;
+	
+			//we know that x2 and y2 is updating from mouseDragged event so 
+			//there is no meaning to catching those 2 points.
+
+			pnlImage.addTool(tool);
 		}
-		public void mouseExited(MouseEvent e) {
 
-		}
-		public void mouseClicked(MouseEvent e) {
-
-			if(selectedTool == null){
-				Graphics g = e.getComponent().getGraphics();
-				g.clearRect(0, 0, e.getComponent().getWidth(), e.getComponent().getHeight());
-			}		
-
-		}
 	};
 
-	//stackoverflow.com/questions/23730793/how-to-get-image-pixel-coordinates-in-java-by-pointing-mouse-to-a-specific-poin
+	//stackoverflow.com/questions/23730793/how-to-get-image-pixel-coordinates-
+	//in-java-by-pointing-mouse-to-a-specific-poin
 	Point coordinatesFromPoint(Component comp){
 		PointerInfo pointerInfo = MouseInfo.getPointerInfo();
 		Point p = new Point(pointerInfo.getLocation());
 		SwingUtilities.convertPointFromScreen(p, comp);
 		return p;
+	}
+
+	Map<String, Object> buildParams(String tool, 
+									int x1, int y1, int x2, int y2,
+									Color c, Font font, Stroke s, boolean fill){
+		Map<String, Object> params = new HashMap<>();
+		params.put("tool", tool); //tool name, i.e. Oval, Line..
+		params.put("x1", x1 );
+		params.put("y1", y1 );
+		params.put("x2", x2 );
+		params.put("y2", y2 );
+		params.put("color", c);
+		params.put("font", font);
+		params.put("stroke", s);
+		params.put("fill", true); 
+		return params;
 	}
 	
 	
