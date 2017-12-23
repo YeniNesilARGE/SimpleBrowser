@@ -14,17 +14,25 @@ import java.awt.image.*;
 
 
 public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonListener,
-													KeyListener{
+													KeyListener {
 	PaintingPanel pnlImage;
-	String selectedTool;
+	static String selectedTool;
+	static boolean isFill;
+	static int strokeLevel;
+	static boolean dash;
+	static Color color;
+
+	private static final String DASH = "Dash";
+	private static final String FILL = "Fill";
 
 	public static JFrame buildFrame(String title, JPanel panel, int x, int y, int width, int height) {
 		JFrame frame = new JFrame(title);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
 		frame.setContentPane(panel);
-		frame.setBounds(x,y,width,height);
+		frame.setBounds(x, y, width, height);
 		//frame.pack();
 		frame.setFocusable(true); // needs by key listener
+		frame.setFocusTraversalKeysEnabled(false);
 		frame.addKeyListener( (KeyListener) panel); // key listener
 		frame.setVisible(true);
 		return frame;
@@ -63,15 +71,35 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		ButtonGroup groupDrawing = new ToolButtonGroup(this);
 		makeTool(pnlTools, groupDrawing, Tool.SELECT);
 		makeTool(pnlTools, groupDrawing, Tool.LINE);
-		makeTool(pnlTools, groupDrawing, Tool.TRIANGLE);
 		makeTool(pnlTools, groupDrawing, Tool.RECTANGLE);
 		makeTool(pnlTools, groupDrawing, Tool.OVAL); 
+		makeTool(pnlTools, groupDrawing, Tool.RUBBER); 
 
 		makeButton(pnlTools, null, "Clear").addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				pnlImage.removeShapes();
 			}
 		});
+
+		JComboBox<Integer> cmbStrokeLevel = new JComboBox(); // stroke level	
+		for(int i = 1; i < 5; i++) {
+			cmbStrokeLevel.addItem(i);
+		}
+		makeComponent(pnlTools, cmbStrokeLevel, null);
+		//stackoverflow.com/questions/18405660/how-to-set-component-size-inside-container-with-boxlayout
+		cmbStrokeLevel.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbStrokeLevel.getMinimumSize().height)); 
+	
+
+		JCheckBox checkFill = new JCheckBox(FILL); //fill
+		makeComponent(pnlTools, checkFill, FILL);
+
+		JCheckBox checkDash = new JCheckBox(DASH); 		//dash
+		makeComponent(pnlTools, checkDash, DASH);
+
+		cmbStrokeLevel.addItemListener(strokeLevelListener);
+		checkFill.addItemListener(checkFillListener);
+		checkDash.addItemListener(checkFillListener);
+
 
 		// --------- IMAGE ---------------
 		GridBagConstraints constImage= new GridBagConstraints();
@@ -103,6 +131,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		pnlColor.setBackground(java.awt.Color.YELLOW);
 		pnlColor.setOpaque(true);
 		add(pnlColor, constColor);
+	
+		pnlColor.addMouseListener(colorListener);
 
 	}
 	
@@ -112,6 +142,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		tool.setAlignmentX(Component.CENTER_ALIGNMENT);
 		tool.setActionCommand(name); // stackoverflow.com/questions/27916896/what-is-an-action-command-that-is-set-by-setactioncommand
 		panel.add(tool);
+		tool.setFocusable(false);
 		if(group != null)
 			group.add(tool);
 		return tool;
@@ -122,9 +153,22 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		JButton btn = new JButton(name);
 		btn.setAlignmentX(Component.CENTER_ALIGNMENT);	
 		panel.add(btn);
+		btn.setFocusable(false);
 		if(group != null)
 			group.add(btn);
 		return btn;
+	}
+
+	private JComponent makeComponent(JPanel panel, JComponent component, String name) {
+		panel.add(Box.createRigidArea(new Dimension(5,5)));
+		component.setAlignmentX(Component.CENTER_ALIGNMENT);
+		panel.add(component);
+		component.setFocusable(false);
+		if ( component instanceof JButton && name != null) {
+			JButton b = (JButton) component;
+			b.setActionCommand(name);
+		}
+		return component;
 	}
 
 	@Override
@@ -145,9 +189,17 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 
 			// set x1,y1 in place of x2,y2 as default.
 			params = buildParams(selectedTool, x1, y1, x1, y1, 
-								null,null,
-								new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{ 10.0f }, 0.0f), // test
-								false);  			
+								color,
+								null,
+								createStroke(selectedTool, strokeLevel, dash), // test
+								isFill);
+			/* when marked a area with Select tool, if user tries to reselect different area
+			   it should be popped and added new one. While doing this process in mouseRealesed()
+			   old one could be deleted and it will be shown on GUI. To make it happen call repaint() */
+			String s = pnlImage.peekShapeTag(); 
+			if ( s != null && s.equals(Tool.SELECT) ) 
+				pnlImage.popShape();  
+								
 		}
 
 		@Override
@@ -175,7 +227,9 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			//we know that x2 and y2 is updating from mouseDragged event so 
 			//there is no meaning to catching those 2 points.
 
+			
 			pnlImage.addDraw(params);
+
 		}
 
 	};
@@ -205,19 +259,83 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		return params;
 	}
 
+	Stroke createStroke(String selectedTool, int strokeLevel, boolean dash){
+		
+		if ( selectedTool.equals(Tool.SELECT) ) {
+			return new BasicStroke(1.25f, 
+						BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 
+						10.0f, 
+						new float[]{ 5.0f }, 
+						0.0f );
+		}		
 
+
+		float width = 1.0f * strokeLevel;
+
+		if ( dash ) {
+			return new BasicStroke(width, 
+						BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 
+						10.0f, 
+						new float[]{ 5.0f }, 
+						0.0f );
+		} else {
+			return new BasicStroke(width);
+		}
+	}
+
+	// KeyListener events
 	@Override
 	public void keyPressed(KeyEvent e) {
-		if( e.getKeyChar() == 127 ){
-			System.out.println("dele basıldı");
+
+		if( e.getKeyChar() == 127){
+			Map<String, Object> params = pnlImage.peekShape();
+				
+			if ( params != null && params.get("tool").equals(Tool.SELECT) ) {			
+				params.put("tool", Tool.DELETE);
+				pnlImage.repaint();
+			}
+
 		}
 	}
 	
 	public void keyReleased(KeyEvent e) { }
 	public void keyTyped(KeyEvent e) { }
 	
-	
-	
+	// Combobox's ItemListener
+	ItemListener strokeLevelListener = new ItemListener() {
+		@Override	
+		public void itemStateChanged(ItemEvent e) {
+			if( e.getStateChange() == ItemEvent.SELECTED) {
+				strokeLevel = (Integer) e.getItem();
+			}
+		}
+	};
+
+	// Checkbox's Listener
+	ItemListener checkFillListener = new ItemListener() {
+		@Override	
+		public void itemStateChanged(ItemEvent e) {
+			JCheckBox cb = (JCheckBox) e.getItem();
+			
+			if (cb.getActionCommand().equals(DASH)) {
+				dash = !dash;
+			} else { // if its not dash its fill
+				isFill = !isFill;
+			}
+
+		}
+	};
+
+	//Color Listener 		//riyafa.wordpress.com/2014/07/22/jcolorchooser-hide-all-default-panels-and-show-rgb-and-swatches-panels-only/
+	MouseListener colorListener = new MouseAdapter() {
+		@Override	
+		public void mouseClicked(MouseEvent e) {
+			color = JColorChooser.showDialog(
+					 		PaintPanel.this,
+					 "Choose a color",
+					 ((JPanel) e.getComponent()).getBackground());
+		}
+	};
 }
 
 //src : dzone.com/articles/unselect-all-toggle-buttons
@@ -245,5 +363,4 @@ class ToolButtonGroup extends ButtonGroup {
 		void onSelection(String selectedTool);
 	}
 }
-
 

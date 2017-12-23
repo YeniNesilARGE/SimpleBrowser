@@ -16,7 +16,9 @@ public abstract class Tool {
 								TEXT = "Text", 
 								OVAL = "Oval", 
 								RECTANGLE = "Rectangle", 
-								SELECT = "Select" ;
+								SELECT = "Select",
+								DELETE = "Delete", 
+								RUBBER = "Rubber" ;
 	
 	protected Tool(String tool){ // reflection will instantinate Tool objects
 		name = tool;
@@ -52,7 +54,90 @@ public abstract class Tool {
 	}
 }
 
+class Select extends Tool {
+	
+	private Select(String tool) {
+		super(tool);
+	}
+	
+	void operate(Graphics g, Map<String, Object> params) {
+		super.operate(g,params);
+		int x1 = (Integer) params.get("x1");
+		int y1 = (Integer) params.get("y1");
+		int x2 = (Integer) params.get("x2");
+		int y2 = (Integer) params.get("y2");
 
+		if ( x2 < x1 ) {
+			int temp = x1;
+			x1 = x2;
+			x2 = temp;
+		}	
+
+		if ( y2 < y1 ) {
+			int temp = y1;
+			y1 = y2;
+			y2 = temp;
+		}	
+
+		int width = x2 - x1;
+		int height = y2 -y1;
+	
+
+		g.drawRect(x1,y1,width,height);
+	}
+}
+
+class Delete extends Tool {
+	
+	private Delete(String tool) {
+		super(tool);
+	}
+	
+	void operate(Graphics g, Map<String, Object> params) {
+		super.operate(g,params);
+		int x1 = (Integer) params.get("x1");
+		int y1 = (Integer) params.get("y1");
+		int x2 = (Integer) params.get("x2");
+		int y2 = (Integer) params.get("y2");
+
+		if ( x2 < x1 ) {
+			int temp = x1;
+			x1 = x2;
+			x2 = temp;
+		}	
+
+		if ( y2 < y1 ) {
+			int temp = y1;
+			y1 = y2;
+			y2 = temp;
+		}	
+
+		int width = x2 - x1;
+		int height = y2 - y1;
+
+		g.clearRect(x1,y1,width,height);
+	}
+}
+
+class Rubber extends Tool {
+	
+	private Rubber(String tool) {
+		super(tool);
+	}
+	
+	void operate(Graphics g, Map<String, Object> params) {
+		super.operate(g,params);
+		int x1 = (Integer) params.get("x1");
+		int y1 = (Integer) params.get("y1");
+		int x2 = (Integer) params.get("x2");
+		int y2 = (Integer) params.get("y2");
+
+		int width = 20;
+		int height = 20;
+
+		g.clearRect(x1,y1,width,height);
+	}
+}
 
 class Text extends Tool {
 
@@ -142,8 +227,9 @@ class Rectangle extends Tool {
 		
 		Boolean fill = (Boolean) params.get("fill");
 		
-		if( fill != null && fill ) 
+		if( fill != null && fill ) {
 			g.fillRect(x1,y1,width,height);
+		}
 		else 
 			g.drawRect(x1,y1,width,height);
 	}

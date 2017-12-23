@@ -62,4 +62,24 @@ public class PaintingPanel extends ImagePanel{
 		repaint();
 	}	
 
+	public Map<String, Object> peekShape(){
+		if (!shapes.isEmpty())
+			return shapes.peek();
+		return null;
+	}
+
+	public String peekShapeTag(){
+		String s = null;		
+		if (!shapes.isEmpty())
+			s = (String) shapes.peek().get("tool");
+		return s;
+	}
+
+
+	public void popShape(){
+		if (!shapes.isEmpty())
+			shapes.pop();
+		repaint();
+	}
+
 }
