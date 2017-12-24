@@ -43,6 +43,50 @@ public abstract class Tool {
 		Graphics g = comp.getGraphics();
 		operate(g, params);
 	}
+
+	static Map<String, Object> buildParams(String tool, 
+									int x1, int y1, int x2, int y2,
+									Color c, Font font, Stroke s, boolean fill){
+		Map<String, Object> params = new HashMap<>();
+		params.put("tag", tool); //tool name, i.e. Oval, Line..
+		params.put("x1", x1 );
+		params.put("y1", y1 );
+		params.put("x2", x2 );
+		params.put("y2", y2 );
+		params.put("color", c);
+		params.put("font", font);
+		params.put("stroke", s);
+		params.put("fill", fill); 
+		params.put("completed", false); // completed key represents if a drawing just completed.
+										// This is needed that seperating drawings from the others. 
+		return params;
+	}
+
+	static Stroke createStroke(String selectedTool, int strokeLevel, boolean dash){
+
+		if ( selectedTool.equals(Tool.SELECT) ) {
+			return new BasicStroke(1.25f, 
+						BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 
+						10.0f, 
+						new float[]{ 5.0f }, 
+						0.0f );
+		} else if ( selectedTool.equals(Tool.PENCIL) ){
+			dash = false;
+		}
+
+
+		float width = 1.0f * strokeLevel;
+
+		if ( dash ) {
+			return new BasicStroke(width, 
+						BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 
+						10.0f, 
+						new float[]{ 5.0f }, 
+						0.0f );
+		} else {
+			return new BasicStroke(width);
+		}
+	}
 	
 	@Override
 	public String toString() {
@@ -258,14 +302,12 @@ class Pencil extends Tool {
 	}
 	
 	void operate(Graphics g, Map<String, Object> params) {
-		Graphics t = g.create();
 		super.operate(g,params);
 		int x1 = (Integer) params.get("x1");
 		int y1 = (Integer) params.get("y1");
 		int x2 = (Integer) params.get("x2");
 		int y2 = (Integer) params.get("y2");
-
-		
+		 	
 		g.drawLine(x1,y1,x2,y2); 
 	}
 }

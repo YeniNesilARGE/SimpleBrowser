@@ -48,7 +48,7 @@ public class PaintingPanel extends ImagePanel{
 
 	public void newPainting(){
 		// filling panel by using clearRect. Passing panels width and height.
-		Map<String, Object> clearParams = PaintPanel.buildParams(Tool.RECTANGLE, 0, 0, 2000, 2000, 
+		Map<String, Object> clearParams = Tool.buildParams(Tool.RECTANGLE, 0, 0, 2000, 2000, //2000,2000 should be gets from screens resolution.
 															Color.WHITE,
 															null, null, true);
 		completeDraw(clearParams);
