@@ -16,6 +16,7 @@ import java.awt.image.*;
 public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonListener,
 													KeyListener {
 	PaintingPanel pnlImage;
+	JPanel pnlColor;
 	static String selectedTool;
 	static boolean isFill;
 	static int strokeLevel;
@@ -114,6 +115,13 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			}
 		});
 
+		makeButton(pnlTools, null, "New").addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				pnlImage.newPainting();
+			}
+		});
+
+
 		// --------- IMAGE ---------------
 		GridBagConstraints constImage= new GridBagConstraints();
 		constImage.gridx = 3;
@@ -139,12 +147,14 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
         constColor.anchor = GridBagConstraints.SOUTHWEST;
 		constColor.fill = GridBagConstraints.BOTH;
 
-		JPanel pnlColor = new JPanel();
-		pnlColor.setForeground(java.awt.Color.YELLOW);
-		pnlColor.setBackground(java.awt.Color.YELLOW);
+		pnlColor = new JPanel();
 		pnlColor.setOpaque(true);
 		add(pnlColor, constColor);
 	
+		color = Color.BLACK; // default color
+		pnlColor.setForeground(color);
+		pnlColor.setBackground(color);
+
 		pnlColor.addMouseListener(colorListener);
 
 	}
@@ -204,7 +214,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			params = buildParams(selectedTool, x1, y1, x1, y1, 
 								color,
 								null,
-								createStroke(selectedTool, strokeLevel, dash), // test
+								createStroke(selectedTool, strokeLevel, dash),
 								isFill);
 
 			pnlImage.beginDraw(params);
@@ -235,6 +245,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			params.put("y2", y2);
 
 			if( selectedTool.equals(Tool.PENCIL) || selectedTool.equals(Tool.RUBBER) ) {
+				System.out.println("pencil");
 				pnlImage.completeDraw(params);
 				params = buildParams(selectedTool, x2, y2, x2, y2, 
 								color,
@@ -243,8 +254,9 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 								isFill);
 				
 			}			
-			//this needed to draw on the are that cleared with rectClear() method. 			
+
 			pnlImage.beginDraw(params);
+
 			
 		}
 
@@ -257,6 +269,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 
 			params.put("completed", true);
 			pnlImage.completeDraw(params);
+			pnlImage.repaint();
 			
 		}
 
@@ -363,6 +376,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 					 		PaintPanel.this,
 					 "Choose a color",
 					 ((JPanel) e.getComponent()).getBackground());
+			pnlColor.setForeground(color);
+			pnlColor.setBackground(color);
 		}
 	};
 }

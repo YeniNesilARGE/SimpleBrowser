@@ -115,7 +115,6 @@ class Delete extends Tool {
 
 		int width = x2 - x1;
 		int height = y2 - y1;
-
 		g.clearRect(x1,y1,width,height);
 	}
 }

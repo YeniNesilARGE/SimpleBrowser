@@ -46,6 +46,16 @@ public class PaintingPanel extends ImagePanel{
 
 	}
 
+	public void newPainting(){
+		// filling panel by using clearRect. Passing panels width and height.
+		Map<String, Object> clearParams = PaintPanel.buildParams(Tool.RECTANGLE, 0, 0, 2000, 2000, 
+															Color.WHITE,
+															null, null, true);
+		completeDraw(clearParams);
+		params = null;
+		repaint();
+	}
+
 	public void beginDraw(Map p) {
 		params = p;
 		repaint();
@@ -55,7 +65,6 @@ public class PaintingPanel extends ImagePanel{
 		shapes.push(params);
 		params = null;
 		redo.clear();
-		repaint();
 	}
 
 	public void removeShapes(){
@@ -127,7 +136,7 @@ public class PaintingPanel extends ImagePanel{
 		do {
 			shapes.push( popRedo() );
 			temp = peekRedo() ; 
-			//params = null;
+			params = null;
 		} while ( temp != null && !((Boolean)temp.get("completed")) );
 
 		repaint();
