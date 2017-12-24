@@ -1,15 +1,15 @@
 package yeninesilarge.calendarapp;
+
 /*
-     Enes Kamil YILMAZ
-    FSM Vakıf University
-    Computer Engineering
-        3rd Grade
-        1521221039
-                        */
+ Enes Kamil YILMAZ
+ FSM Vakıf University
+ Computer Engineering
+ 3rd Grade
+ 1521221039
+ */
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,6 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,16 +32,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.imageio.ImageIO;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
-public class CalendarApp extends javax.swing.JFrame {
+public class CalendarApp extends javax.swing.JFrame implements Runnable {
 
     DefaultTableModel dtm;
     DefaultListModel dlm;
@@ -49,13 +48,54 @@ public class CalendarApp extends javax.swing.JFrame {
     public static Collection<Agenda> data = new HashSet<>();
     static String choosenDate, day2, month2, year2, irlDate;
     String boostTime;
-    boolean found = true;
+    boolean found = true, x = false;
     final static String LINE_SEP = System.getProperty("line.separator"), TAB = "\\t", specialSep = ",   ";
     static String txtName = "Agenda.txt";
     static File f = new File(txtName);
-    //File img1 = new File("C:\\Users\\nskml\\Desktop\\2.jpg");
     List<Long> IDs = new ArrayList<>();
     List<Agenda> Agendas = new ArrayList<>();
+    LocalDate localDate;
+    CalendarApp b;
+    static Collection<Appointment> L = new ArrayList<>();
+
+    Timer timer = new Timer(500, (ActionEvent e) -> {
+        tickTock();//saati günceller.
+        refreshCalendar(currentMonth, currentYear);
+    });
+
+    Timer timer7 = new Timer(50000, (ActionEvent e) -> {
+        report();
+    });
+
+    Timer timer3 = new Timer(500, (ActionEvent e) -> {
+        IDs.clear();
+        Agendas.clear();
+        String selectedDate = currentDay + "." + (currentMonth + 1) + "." + currentYear;
+        choosenDate = selectedDate;
+
+        found = false;
+        dlm.clear();
+        for (Agenda x : data) {
+            if (selectedDate.equals(x.date) && !IDs.contains(x.id)) {
+                found = true;
+                IDs.add(x.id);
+                Agendas.add(x);
+                if (dlm.contains(x.eventName.toString() + " for day long") || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour)) {
+                    //içerde zaten varsa ekleme yapma
+                } else {
+                    if (x.isAllDay) {
+                        dlm.addElement(x.eventName.toString() + " for day long");
+                    } else {
+                        dlm.addElement(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour);
+                    }
+                }
+            }
+        }
+        if (!found) {
+            dlm.clear();
+            dlm.addElement("What would you like to do today?");
+        }
+    });
 
     public CalendarApp() throws IOException {
         initComponents();
@@ -65,11 +105,15 @@ public class CalendarApp extends javax.swing.JFrame {
         dlm = new DefaultListModel();
         agendaList.setModel(dlm);
         cal = new GregorianCalendar();
-        
+
+        b = new CalendarApp(realDay, realMonth, realYear); //real date
+
+        jPanel1.setBackground(Color.gray);
+        this.setLocation(500, 200);
         this.setTitle("                                                        "
                 + "                                                Calendar");
         this.setResizable(false);
-        
+
         //No resize/reorder
         calendarTable.getTableHeader().setResizingAllowed(false);
         calendarTable.getTableHeader().setReorderingAllowed(false);
@@ -84,64 +128,166 @@ public class CalendarApp extends javax.swing.JFrame {
         dtm.setColumnCount(7);
         dtm.setRowCount(6);
 
+        localDate = LocalDate.now();
+        irlDate = DateTimeFormatter.ofPattern("d/M/yyyy").format(localDate);
+        currentDay = Integer.parseInt(DateTimeFormatter.ofPattern("d").format(localDate)); //bunlar 01 veriyor ama integera çevirince 1 oluyor
+        currentMonth = Integer.parseInt(DateTimeFormatter.ofPattern("M").format(localDate)) - 1;
+        currentYear = Integer.parseInt(DateTimeFormatter.ofPattern("yyyy").format(localDate));
+
+        System.out.println(currentDay + "." + (currentMonth + 1) + "." + currentYear);
+
         //Setting real dates
         realDay = cal.get(GregorianCalendar.DAY_OF_MONTH); //Get day
-        realMonth = cal.get(GregorianCalendar.MONTH); //Get month
+        realMonth = cal.get(GregorianCalendar.MONTH); //Get month 01 yerine 1 veriyor bunlar
         realYear = cal.get(GregorianCalendar.YEAR); //Get year
         currentMonth = realMonth; //Match month and year
         currentYear = realYear;
 
-        //Set date and time labels
-        irlDate = realDay + "." + (realMonth + 1) + "." + realYear;
         date.setText(irlDate);
-        
-        Timer timer = new Timer(500, (ActionEvent e) -> {
-            tickTock();//saati günceller.
+
+        Timer timer2 = new Timer(500, (ActionEvent e) -> {
             calendarTable.setDefaultRenderer(calendarTable.getColumnClass(0), new CalendarRenderer());
-            refreshCalendar(currentMonth, currentYear);
+            date.setText(irlDate);
         });
+
         timer.setRepeats(true);
         timer.setCoalesce(true);
         timer.setInitialDelay(0);
         timer.start();
+
+        timer2.setRepeats(true);
+        timer2.setCoalesce(true);
+        timer2.setInitialDelay(0);
+        timer2.start();
+
+        timer7.setRepeats(true);
+        timer7.setCoalesce(true);
+        timer7.setInitialDelay(0);
+        timer7.start();
+
         if (!f.exists()) {
             JOptionPane.showMessageDialog(this, "Old txt file not found.\n Creating new one.", "Error", JOptionPane.ERROR_MESSAGE);
-            List<String> lines = Arrays.asList("199314857,   Event,   Programming Exam,   16.12.2017,   false,   10.00,   12.00,   Red,   C109,   WORK HARD,   12 day before",
-                    "304556711,   Event,   Study operating systems,   21.12.2017,   true,   -,   -,   Grey,   -,   Pdf 8 and 9,   1 week before",
-                    "899815102,   Event,   Finals Starting,   4.1.2018,   true,   10.00,   12.00,   Red,   -,   WORK HARD,   None",
-                    "438041405,   Event,   Last day of semester holiday,   12.2.2018,   true,   -,   -,   Red,   -,   GG,   None",
-                    "523459998,   Event,   Exam,   10.1.2018,   false,   12.00,   14.00,   Red,   C109,   WORK HARD,   None",
-                    "406702748,   Event,   Exam,   11.1.2018,   false,   10.00,   12.00,   Red,   D107,   WORK HARD,   None",
-                    "561304554,   Event,   Exam,   13.1.2018,   false,   10.00,   12.00,   Red,   B121,   WORK HARD,   None",
-                    "784797509,   Event,   Study sum,   21.12.2017,   false,   10.00,   12.00,   Grey,   -,   WORK HARD,   None",
-                    "620867157,   Event,   Study,   3.1.2018,   true,   10.00,   12.00,   Green,   -,   WORK HARD,   None",
-                    "367696710,   Event,   Finals over boi. Go home...,   13.1.2018,   false,   15.00,   18.00,   Blue,   -,   -,   None",
-                    "97106890,   Anniversary,   New Year,   1.1.2017,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "21085447,   Anniversary,   New Year,   1.1.2018,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "95113693,   Anniversary,   New Year,   1.1.2019,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "90362170,   Anniversary,   New Year,   1.1.2020,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "23200431,   Anniversary,   New Year,   1.1.2021,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "38838585,   Anniversary,   New Year,   1.1.2022,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "18476117,   Anniversary,   New Year,   1.1.2023,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "76574886,   Anniversary,   New Year,   1.1.2024,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "40267471,   Anniversary,   New Year,   1.1.2025,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "20792965,   Anniversary,   New Year,   1.1.2026,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before",
-                    "26700604,   Anniversary,   New Year,   1.1.2027,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Hour Before");
+            List<String> lines = Arrays.asList("97106890,   Anniversary,   New Year,   1.1.2017,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "21085447,   Anniversary,   New Year,   1.1.2018,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "95113693,   Anniversary,   New Year,   1.1.2019,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "90362170,   Anniversary,   New Year,   1.1.2020,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "23200431,   Anniversary,   New Year,   1.1.2021,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "38838585,   Anniversary,   New Year,   1.1.2022,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "18476117,   Anniversary,   New Year,   1.1.2023,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "76574886,   Anniversary,   New Year,   1.1.2024,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "40267471,   Anniversary,   New Year,   1.1.2025,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "20792965,   Anniversary,   New Year,   1.1.2026,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "26700604,   Anniversary,   New Year,   1.1.2027,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                    "38646710,   Event,   İleri Programlama Proje Sunumu,   27.12.2017,   false,   11:30,   11:40,   Red,   B121,   5 dakikalık sunum olacak. Kolay gelsin...,   1 Day Before",
+                    "15554645,   Event,   Algoritma Analizi QUIZ,   27.12.2017,   false,   13:00,   15:50,   Red,   D105,   :/,   2 Day Before",
+                    "40735290,   Event,   Last of school,   29.12.2017,   true,   -,   null,   Blue,   fsmvü,   but its not over yet ...,   None",
+                    "58153479,   Event,   Veritabanı proje son sunum günü,   29.12.2017,   true,   -,   null,   Red,   fsmvü,   kolay gelsin,   1 Day Before",
+                    "28105567,   Event,   OS Thread Proje Son Teslim Günü,   31.12.2017,   true,   -,   null,   Red,   -,   -,   1 Day Before",
+                    "67482412,   Event,   Algoritma Analizi FİNAL,   4.1.2018,   true,   -,   null,   Red,   -,   -,   None",
+                    "24179495,   Event,   Etik FİNAL,   5.1.2018,   true,   -,   null,   Red,   -,   -,   None",
+                    "62551483,   Event,   Müh. Ekonomisi FİNAL,   6.1.2018,   true,   -,   null,   Red,   -,   -,   None",
+                    "50237652,   Event,   İşletim Sist. FİNAL,   9.1.2018,   true,   -,   null,   Red,   -,   -,   None",
+                    "14907055,   Event,   İleri Programlama FİNAL,   10.1.2018,   true,   -,   null,   Red,   -,   -,   1 Day Before",
+                    "53556799,   Event,   VeriTabanı FİNAL,   12.1.2018,   true,   -,   null,   Red,   -,   -,   1 Day Before");
             Path file = Paths.get("Agenda.txt");
-            Files.write(file, lines, Charset.forName("Cp1254"));
+            Files.write(file, lines, Charset.forName("UTF-8"));
         }
 
-        //Populate table
+        //yıl ekle
         for (int i = realYear; i <= realYear + 10; i++) {
             cmbYear.addItem(String.valueOf(i));
         }
 
-        //Prepare the table
-        refreshCalendar(realMonth, realYear); //Refresh calendar
+        refreshCalendar(realMonth, realYear);
 
         readAgenda();
         fillTheAgenda();
         calendarTable.setDefaultRenderer(calendarTable.getColumnClass(0), new CalendarRenderer());
+    }
+
+    int dayx, monthx, yearx, hourx, minutex; //current date d/m/y
+    static int dayy, monthh, yearr, hourr, minn;
+    int delay = 1000; //msec = one day
+    int n = 0; //days
+    Thread thd;
+
+    public CalendarApp(int d, int m, int y) {
+        dayx = d;
+        monthx = m;
+        yearx = y;
+    }
+
+    public void nextDay() { //modifies d/m/y to the following day
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
+        localDate = LocalDate.parse(irlDate, formatter);
+        localDate = localDate.plusDays(1);
+        irlDate = DateTimeFormatter.ofPattern("d/M/yyyy").format(localDate);
+        System.out.println(irlDate);
+        currentDay = Integer.parseInt(DateTimeFormatter.ofPattern("d").format(localDate));
+        currentMonth = Integer.parseInt(DateTimeFormatter.ofPattern("M").format(localDate)) - 1;
+        currentYear = Integer.parseInt(DateTimeFormatter.ofPattern("yyyy").format(localDate));
+    }
+
+    public void report() {
+        for (Appointment a : L) {
+            if (a.occursOn(currentDay, currentMonth, currentYear)) {
+
+                //System.out.println("Appıintment occurson true  " + a.desc);
+                String selectedDate = currentDay + "." + (currentMonth + 1) + "." + currentYear;
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d.M.yyyy");
+                LocalDate localDate = LocalDate.parse(selectedDate, formatter);
+                if (a.type.equals("Day")) {
+                    localDate = localDate.plusDays(a.numm);
+                } else if (a.type.equals("Week")) {
+                    localDate = localDate.plusWeeks(a.numm);
+                }
+                selectedDate = DateTimeFormatter.ofPattern("d.M.yyyy").format(localDate);
+
+                for (Agenda x : data) {
+                    if (selectedDate.equals(x.date)) {
+                        if (!a.report) {
+                            a.report = true;
+                            if (x.isAllDay) {
+                                JOptionPane.showMessageDialog(this, a.desc + " \n " + x.eventType + " \n" + x.eventName + "\n" + "All Day Long" + "\n" + x.location + "\n" + x.description, "          Reminder  ", JOptionPane.INFORMATION_MESSAGE);
+                            } else {
+                                JOptionPane.showMessageDialog(this, a.desc + " \n " + x.eventType + " \n" + x.eventName + "\n" + x.fromHour + " " + x.toHour + "\n" + x.location + "\n" + x.description, "          Reminder  ", JOptionPane.INFORMATION_MESSAGE);
+                            }
+                        }
+                    } else {
+                        //System.out.println(selectedDate + " -- " + x.date);
+                    }
+                }
+            } else {
+                //do nothing
+            }
+        }
+    }
+
+    public void start(int x) {
+        n = x;
+        thd = new Thread(this);
+        thd.start();
+    }
+
+    public void stop() {
+        x = false;
+        System.out.println("stopped");
+        n = 0;
+        thd = null;
+    }
+
+    public void run() {
+        x = true;
+        while (n > 0) {
+            report();
+            try { //why try?  ...
+                Thread.sleep(delay);
+            } catch (Exception e) {
+            }
+            nextDay();
+            n--;
+        }
     }
 
     void tickTock() {
@@ -150,13 +296,13 @@ public class CalendarApp extends javax.swing.JFrame {
         time.setText(timeS);
     }
 
-    static void readAgenda() {
+    static void readAgenda() {//reading txt file
         try {
             InputStream in = new FileInputStream(f);
             byte[] ba = new byte[in.available()];
             in.read(ba);
             in.close();
-            String str = new String(ba, "Cp1254");
+            String str = new String(ba, "UTF-8");
             String[] sa = str.split(LINE_SEP);
             System.out.printf("%s satir okundu %n", sa.length);
             for (String s : sa) {
@@ -165,28 +311,50 @@ public class CalendarApp extends javax.swing.JFrame {
         } catch (IOException x) {
             System.out.println(x);
         }
+
     }
 
-    static void readLine(String line) { //ilk
+    static void addtoReminder(String j, String date) {
+        //None, 1 Day Before, 2 Day Before, 3 Day Before, 4 Day Before, 1 Week Before, 2 Week Before
+        if (j.equals("None")) {
+        } else if (j.equals("1 Day Before")) {
+            L.add(new Day(date, 1));
+        } else if (j.equals("2 Day Before")) {
+            L.add(new Day(date, 2));
+        } else if (j.equals("3 Day Before")) {
+            L.add(new Day(date, 3));
+        } else if (j.equals("4 Day Before")) {
+            L.add(new Day(date, 4));
+        } else if (j.equals("1 Week Before")) {
+            L.add(new Week(date, 1));
+        } else if (j.equals("2 Week Before")) {
+            L.add(new Week(date, 2));
+        } else {
+            System.out.println("remindera ekleme yapılamadı....");
+        }
+    }
+
+    static void readLine(String line) { //from file to Agenda
         if (line.equals("")) {
             //boş satır varsa birşey yapma
-        }else{
-        String[] satır = line.split(",   ");
-        long id = Long.parseLong(satır[0]);
-        String a = satır[1];
-        String b = satır[2];
-        String c = satır[3];
-        String c2 = satır[4];
-        boolean c22 = Boolean.parseBoolean(c2);
-        String d = satır[5];
-        String e = satır[6];
-        String f = satır[7];
-        String g = satır[8];
-        String h = satır[9];
-        String j = satır[10];
-        
-        Agenda agenda = new Agenda(id,a, b, c, c22, d, e, f, g, h, j);
-        data.add(agenda);
+        } else {
+            String[] satır = line.split(",   ");
+            long id = Long.parseLong(satır[0]);//id
+            String a = satır[1]; //eventType
+            String b = satır[2]; //EventName
+            String c = satır[3]; // date
+            String c2 = satır[4];
+            boolean c22 = Boolean.parseBoolean(c2); //isAllDay?
+            String d = satır[5];//time from
+            String e = satır[6];//time to
+            String f = satır[7];//color
+            String g = satır[8];//location
+            String h = satır[9];//description
+            String j = satır[10];//reminder
+
+            Agenda agenda = new Agenda(id, a, b, c, c22, d, e, f, g, h, j);
+            data.add(agenda);
+            addtoReminder(j, c);
         }
     }
 
@@ -200,10 +368,22 @@ public class CalendarApp extends javax.swing.JFrame {
                 setBackground(new Color(255, 255, 255));
             }
             if (value != null) {
-                if (Integer.parseInt(value.toString()) == realDay && currentMonth == realMonth && currentYear == realYear) { //Today
-                    setBackground(new Color(220, 220, 255));
-                }
+                String tarih = date.getText(), tarih2, tarih3;
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
+                LocalDate localDate = LocalDate.parse(tarih, formatter);
+                tarih2 = DateTimeFormatter.ofPattern("M").format(localDate);
+                tarih3 = DateTimeFormatter.ofPattern("yyyy").format(localDate);
+                int y = Integer.parseInt(tarih2) - 1;
+                int z = Integer.parseInt(tarih3);
                 String day, month, year;
+                month = months[y];
+
+                if (Integer.parseInt(value.toString()) == currentDay && currentMonth == realMonth && currentYear == z) { //Today
+                    setBackground(new Color(220, 220, 255));
+                } else if (Integer.parseInt(value.toString()) == currentDay && month.equals(txtMonth.getText()) && currentYear == z) {
+                    setBackground(new Color(220, 220, 255)); //time booster ile boyama
+                }
+
                 for (Agenda x : data) {
                     if (x.date.substring(1, 2).equals(".")) {//gün 1 baslı
                         day = x.date.substring(0, 1);
@@ -258,7 +438,6 @@ public class CalendarApp extends javax.swing.JFrame {
                             }
                         }
                     } else {
-
                         if (x.color.equals("Red") && value.toString().equals(day) && month.equals(txtMonth.getText()) && cmbYear.getSelectedItem().toString().equals(year)) {
                             setBackground(new Color(255, 51, 0));
                         }
@@ -287,15 +466,15 @@ public class CalendarApp extends javax.swing.JFrame {
         for (Agenda x : data) {
             if (date.getText().equals(x.date)) {
                 f = true;
-               if (dlm.contains(x.eventName.toString() ) || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour) ) {
-                        //içerde zaten varsa ekleme yapma
+                if (dlm.contains(x.eventName.toString()) || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour)) {
+                    //içerde zaten varsa ekleme yapma
+                } else {
+                    if (x.isAllDay) {
+                        dlm.addElement(x.eventName.toString());
                     } else {
-                        if (x.isAllDay) {
-                            dlm.addElement(x.eventName.toString() );
-                        } else {
-                            dlm.addElement(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour);
-                        }
+                        dlm.addElement(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour);
                     }
+                }
                 break;
             }
         }
@@ -303,41 +482,36 @@ public class CalendarApp extends javax.swing.JFrame {
             dlm.clear();
             dlm.addElement("What would you like to do today?");
         }
-
     }
 
     void refreshCalendar(int month, int year) {
         int nod, som; //Number Of Days, Start Of Month
 
-        //Allow/disallow buttons
         monthBack.setEnabled(true);
         monthForw.setEnabled(true);
         if (month == 0 && year <= realYear) {
             monthBack.setEnabled(false);
-        } //Too early
+        }
         if (month == 11 && year >= realYear + 10) {
             monthForw.setEnabled(false);
-        } //Too late
-        txtMonth.setText(months[month]); //Refresh the month label (at the top)
-        cmbYear.setSelectedItem(String.valueOf(year)); //Select the correct year in the combo box
+        }
+        txtMonth.setText(months[month]);
+        cmbYear.setSelectedItem(String.valueOf(year));
 
-        //Clear table
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 7; j++) {
                 dtm.setValueAt(null, i, j);
             }
         }
 
-        //Get first day of month and number of days
         GregorianCalendar cal = new GregorianCalendar(year, month, 1);
         nod = cal.getActualMaximum(GregorianCalendar.DAY_OF_MONTH);
         som = cal.get(GregorianCalendar.DAY_OF_WEEK);
 
-        //Draw calendar
-        for (int i = 1; i <= nod; i++) {
-            int row = new Integer((i + som - 2) / 7);
-            int column = (i + som - 2) % 7;
-            dtm.setValueAt(i, row, column);
+        for (int i = 0; i <= nod - 1; i++) {
+            int row = new Integer(((i) + som - 2) / 7);
+            int column = ((i) + som - 2) % 7;
+            dtm.setValueAt((i + 1), row, column);
         }
     }
 
@@ -347,8 +521,6 @@ public class CalendarApp extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         go2Today = new javax.swing.JButton();
-        timeBooster = new javax.swing.JButton();
-        back2Normal = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         calendarTable = new javax.swing.JTable();
         monthBack = new javax.swing.JButton();
@@ -362,6 +534,7 @@ public class CalendarApp extends javax.swing.JFrame {
         agendaList = new javax.swing.JList();
         jLabel1 = new javax.swing.JLabel();
         add2Agenda = new javax.swing.JButton();
+        jToggleButton1 = new javax.swing.JToggleButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(java.awt.Color.darkGray);
@@ -370,20 +543,6 @@ public class CalendarApp extends javax.swing.JFrame {
         go2Today.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 go2TodayActionPerformed(evt);
-            }
-        });
-
-        timeBooster.setText("Time Boost");
-        timeBooster.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                timeBoosterActionPerformed(evt);
-            }
-        });
-
-        back2Normal.setText("Back to Normal");
-        back2Normal.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                back2NormalActionPerformed(evt);
             }
         });
 
@@ -455,6 +614,13 @@ public class CalendarApp extends javax.swing.JFrame {
             }
         });
 
+        jToggleButton1.setText("Time Boost");
+        jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -469,34 +635,27 @@ public class CalendarApp extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(47, 47, 47)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(timeBooster)
-                        .addGap(18, 18, 18)
-                        .addComponent(back2Normal)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(24, 24, 24)
-                                .addComponent(cmbYear, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 441, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(go2Today)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jToggleButton1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel2)
                         .addGap(24, 24, 24)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(add2Agenda, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel1)
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(date)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(time)))
-                        .addGap(0, 0, Short.MAX_VALUE))))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(go2Today)
-                .addGap(582, 582, 582))
+                        .addComponent(cmbYear, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 441, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(24, 24, 24)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(add2Agenda, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jLabel1)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(date)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(time)))
+                .addGap(0, 26, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -505,36 +664,30 @@ public class CalendarApp extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(monthForw)
-                                    .addComponent(txtMonth))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(monthBack)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(monthForw)
+                                .addComponent(txtMonth))
+                            .addComponent(monthBack, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(14, 14, 14)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(date)
                             .addComponent(time))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                        .addComponent(jLabel1)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbYear, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(add2Agenda)
-                    .addComponent(go2Today))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(timeBooster)
-                    .addComponent(back2Normal))
-                .addGap(58, 58, 58))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmbYear, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel2)
+                        .addComponent(go2Today)
+                        .addComponent(jToggleButton1)))
+                .addGap(84, 84, 84))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -542,12 +695,13 @@ public class CalendarApp extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(38, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 389, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -570,7 +724,7 @@ public class CalendarApp extends javax.swing.JFrame {
                     found = true;
                     IDs.add(x.id);
                     Agendas.add(x);
-                    if (dlm.contains(x.eventName.toString() + " for day long") || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour) ) {
+                    if (dlm.contains(x.eventName.toString() + " for day long") || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour)) {
                         //içerde zaten varsa ekleme yapma
                     } else {
                         if (x.isAllDay) {
@@ -583,11 +737,9 @@ public class CalendarApp extends javax.swing.JFrame {
             }
             if (!found) {
                 dlm.clear();
-                dlm.addElement("What are you want to do?");
+                dlm.addElement("What would you like to do today?");
             }
         }
-
-        //System.out.println(selectedDate);
     }//GEN-LAST:event_calendarTableMousePressed
 
     private void monthBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_monthBackActionPerformed
@@ -615,7 +767,6 @@ public class CalendarApp extends javax.swing.JFrame {
     }//GEN-LAST:event_cmbYearİtemStateChanged
 
     private void cmbYearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbYearActionPerformed
-        // TODO add your handling code here:
         if (cmbYear.getSelectedItem() != null) {
             String b = cmbYear.getSelectedItem().toString();
             currentYear = Integer.parseInt(b);
@@ -624,7 +775,7 @@ public class CalendarApp extends javax.swing.JFrame {
     }//GEN-LAST:event_cmbYearActionPerformed
 
     private void add2AgendaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add2AgendaActionPerformed
-        // Opens EventPopUp frame...
+        // Opens Agenda frame...
         int row = calendarTable.getSelectedRow();
         int col = calendarTable.getSelectedColumn();
         if (row == -1 && col == -1) {
@@ -639,22 +790,27 @@ public class CalendarApp extends javax.swing.JFrame {
             choosenDate = day2 + "." + month2 + "." + year2;
         }
 
-        if (EventPopUp.isOpen) {
+        if (AgendaFrame.isOpen) {
             JOptionPane.showMessageDialog(this, "If you want to choose another date, please close Agenda Frame.", "You can't open more than 1 Agenda Frame", JOptionPane.ERROR_MESSAGE);
         } else if (day2.equals("null")) {
             JOptionPane.showMessageDialog(this, "Please select a date", "Error", JOptionPane.ERROR_MESSAGE);
         } else {
-            EventPopUp a = new EventPopUp();
+            AgendaFrame a = new AgendaFrame();
             a.setVisible(true);
         }
         calendarTable.setDefaultRenderer(calendarTable.getColumnClass(0), new CalendarRenderer());
     }//GEN-LAST:event_add2AgendaActionPerformed
 
     private void go2TodayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_go2TodayActionPerformed
-        // TODO add your handling code here:
+        localDate = LocalDate.now();
+        irlDate = DateTimeFormatter.ofPattern("d/M/yyyy").format(localDate);
+        currentDay = Integer.parseInt(DateTimeFormatter.ofPattern("d").format(localDate));
+
+        System.out.println(currentDay + "-" + currentMonth + " - " + currentYear);
+
         //Setting real dates
         realDay = cal.get(GregorianCalendar.DAY_OF_MONTH); //Get day
-        realMonth = cal.get(GregorianCalendar.MONTH); //Get month
+        realMonth = cal.get(GregorianCalendar.MONTH); //Get month 01 yerine 1 veriyor bunlar
         realYear = cal.get(GregorianCalendar.YEAR); //Get year
         currentMonth = realMonth; //Match month and year
         currentYear = realYear;
@@ -664,11 +820,8 @@ public class CalendarApp extends javax.swing.JFrame {
     }//GEN-LAST:event_go2TodayActionPerformed
 
     private void agendaListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_agendaListMouseClicked
-        // TODO add your handling code here:
-        //System.out.println(agendaList.getSelectedValue());
         for (Agenda x : Agendas) {
             if (x.date.equals(choosenDate) && agendaList.getSelectedIndex() == Agendas.indexOf(x)) {
-                //System.out.println(agendaList.getSelectedIndex() + " - " + Agendas.indexOf(x));
                 if (x.isAllDay) {
                     JOptionPane.showMessageDialog(this, x.eventName + " \n" + "All day long" + "\n" + x.location + "\n" + x.description, x.eventType, JOptionPane.INFORMATION_MESSAGE, null);
                 } else {
@@ -679,46 +832,26 @@ public class CalendarApp extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_agendaListMouseClicked
 
-    private void timeBoosterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeBoosterActionPerformed
-        // TODO add your handling code here:
-        boolean isStr = false;
-        boostTime = JOptionPane.showInputDialog(this, "Please enter minute value for accelerating the time. ", " -Time Booster- ", JOptionPane.INFORMATION_MESSAGE);
-        if (boostTime.equals("")) {
-            //do nothing
-        } else if (boostTime.length() > 0) {
-            Pattern pattern = Pattern.compile("[a-zA-Z]");
-            Matcher matcher = pattern.matcher(boostTime);
-            if (matcher.find()) {
-                System.out.println("harf var");
-                isStr = true;
-            }
-            if (isStr) {
-                JOptionPane.showMessageDialog(this, "Please enter only numbers... ", "Try Again", JOptionPane.ERROR_MESSAGE);
-                boostTime = "";
-            } else {
-                int b = Integer.parseInt(boostTime);
-                if (b < 0) {
-                    JOptionPane.showMessageDialog(this, "Sorry, I can't go to the past :/ ", "Try Again", JOptionPane.ERROR_MESSAGE);
-                    boostTime = "";
-                } else if (b == 0) {
-                    JOptionPane.showMessageDialog(this, "Sorry, I can't stop the time :/ ", "Try Again", JOptionPane.ERROR_MESSAGE);
-                    boostTime = "";
-                } else {
-                    System.out.println("başarılı");
-                }
-            }
-        }
-        System.out.println(boostTime);
+    private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
+        if (jToggleButton1.isSelected()) {
+            System.out.println("selected");
 
-    }//GEN-LAST:event_timeBoosterActionPerformed
+            b.start(60);   //start new Thread using b
+            jToggleButton1.setText("Go back to normal");
 
-    private void back2NormalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_back2NormalActionPerformed
-        // TODO add your handling code here:
-        //stop the appointment thread
-        for (Agenda x : data) {
-            System.out.println(x.eventName);
+            timer3.setRepeats(true);
+            timer3.setCoalesce(true);
+            timer3.setInitialDelay(0);
+            timer3.start();
+
+        } else {
+            System.out.println("released");
+            b.stop();
+            date.setText(irlDate);
+            jToggleButton1.setText("Time Booster");
+            timer3.stop();
         }
-    }//GEN-LAST:event_back2NormalActionPerformed
+    }//GEN-LAST:event_jToggleButton1ActionPerformed
 
     public static void main(String args[]) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -742,7 +875,6 @@ public class CalendarApp extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(CalendarApp.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
@@ -752,13 +884,11 @@ public class CalendarApp extends javax.swing.JFrame {
                 }
             }
         });
-
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton add2Agenda;
     private javax.swing.JList agendaList;
-    private javax.swing.JButton back2Normal;
     private javax.swing.JTable calendarTable;
     private javax.swing.JComboBox cmbYear;
     private javax.swing.JLabel date;
@@ -768,10 +898,11 @@ public class CalendarApp extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JToggleButton jToggleButton1;
     private javax.swing.JButton monthBack;
     private javax.swing.JButton monthForw;
     private javax.swing.JLabel time;
-    private javax.swing.JButton timeBooster;
     private javax.swing.JLabel txtMonth;
     // End of variables declaration//GEN-END:variables
+
 }
