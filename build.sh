@@ -6,4 +6,4 @@ find -type f -name '*.class' -exec rm {} \;
 javac yeninesilarge/image/*.java
 #javac yeninesilarge/image/editor/*.java
 javac -g yeninesilarge/image/paint/*.java
-
+javac yeninesilarge/videoplayer/*.java
