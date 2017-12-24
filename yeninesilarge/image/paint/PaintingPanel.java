@@ -12,6 +12,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.util.Stack;
 import java.util.Map;
+import java.util.HashMap;
 
 import javax.imageio.*;
 import java.io.*;
@@ -27,31 +28,33 @@ public class PaintingPanel extends ImagePanel{
 		redo = new Stack<>();
 	}
 
-	@Override	
+	@Override		
 	public void paint(Graphics g){
 		super.paint(g);
 
 		for( Map<String, Object> params : shapes ) {
-			Tool t = ToolFactory.getInstance((String) params.get("tool"));
+			String tag = params.get("tag").toString();
+			Tool t = ToolFactory.getInstance(tag);
 			t.operate(g, params);
 		}
 	
 		if( params != null ){
-			Tool t = ToolFactory.getInstance((String) params.get("tool"));
+			String tag = params.get("tag").toString();
+			Tool t = ToolFactory.getInstance(tag);
 			t.operate(g, params);
 		}
 
 	}
 
-	public void addDraw(Map params){
+	public void beginDraw(Map p) {
+		params = p;
+		repaint();
+	}
+
+	public void completeDraw(Map params){
 		shapes.push(params);
 		params = null;
 		redo.clear();
-		repaint();
-	}
-	
-	public void setParams(Map p) {
-		params = p;
 		repaint();
 	}
 
@@ -71,15 +74,67 @@ public class PaintingPanel extends ImagePanel{
 	public String peekShapeTag(){
 		String s = null;		
 		if (!shapes.isEmpty())
-			s = (String) shapes.peek().get("tool");
+			s = (String) shapes.peek().get("tag");
 		return s;
 	}
 
 
-	public void popShape(){
-		if (!shapes.isEmpty())
-			shapes.pop();
+	public Map<String, Object> popShape(){
+		Map<String, Object> s= null;
+		if (!shapes.isEmpty()) {
+			s = shapes.pop();
+			repaint();	
+		}
+		return s;
+	}
+
+	public Map<String, Object> peekRedo(){
+		if (!redo.isEmpty())
+			return redo.peek();
+		return null;
+	}
+
+	public Map<String, Object> popRedo(){
+		Map<String, Object> s= null;
+		if (!redo.isEmpty()) {
+			s = redo.pop();
+		}
+		return s;
+	}
+
+	public void undo() {
+		if ( shapes.isEmpty() ) return;
+
+		// the drawing on top of stack's 'completed' property always true.
+		// uses do-while to identify if a drawed a shape or 
+		Map<String, Object> temp = peekShape();
+
+		do {
+			redo.add(popShape());
+			temp = peekShape();
+			params = null; // i dont know why, somehow assigned last drawing into params. I couldnt find the reason of this. completeDraw is already
+							// asssign null into params but it still gets last drawing from somewhere, odd.
+		} while( temp != null && !((Boolean)temp.get("completed")) ) ;
+
+		repaint();
+	}
+	
+	public void redo() {
+		if ( redo.isEmpty() ) return;
+
+		Map<String, Object> temp = peekRedo();
+		
+		do {
+			shapes.push( popRedo() );
+			temp = peekRedo() ; 
+			//params = null;
+		} while ( temp != null && !((Boolean)temp.get("completed")) );
+
 		repaint();
 	}
 
 }
+
+
+
+

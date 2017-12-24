@@ -18,7 +18,8 @@ public abstract class Tool {
 								RECTANGLE = "Rectangle", 
 								SELECT = "Select",
 								DELETE = "Delete", 
-								RUBBER = "Rubber" ;
+								RUBBER = "Rubber",
+								PENCIL = "Pencil" ;
 	
 	protected Tool(String tool){ // reflection will instantinate Tool objects
 		name = tool;
@@ -175,28 +176,6 @@ class Line extends Tool {
 	}
 }
 
-class Triangle extends Tool {
-	
-	private Triangle(String tool) {
-		super(tool);
-	}
-	
-	void operate(Graphics g, Map<String, Object> params) {
-		super.operate(g,params);
-		int[] xPoints = (int[]) params.get("xPoints");
-		int[] yPoints = (int[]) params.get("yPoints");
-		
-		if( xPoints.length != yPoints.length) throw new RuntimeException();
-
-		Boolean fill = (Boolean) params.get("fill");
-		
-		if( fill != null && fill ) 
-			g.fillPolygon(xPoints,yPoints, xPoints.length);
-		else 
-			g.drawPolygon(xPoints,yPoints, xPoints.length);
-	}
-}
-
 class Rectangle extends Tool {
 	
 	private Rectangle(String tool) {
@@ -273,6 +252,25 @@ class Oval extends Tool {
 	}
 }
 
+class Pencil extends Tool {
+	
+	private Pencil(String tool) {
+		super(tool);
+	}
+	
+	void operate(Graphics g, Map<String, Object> params) {
+		Graphics t = g.create();
+		super.operate(g,params);
+		int x1 = (Integer) params.get("x1");
+		int y1 = (Integer) params.get("y1");
+		int x2 = (Integer) params.get("x2");
+		int y2 = (Integer) params.get("y2");
+
+		
+		g.drawLine(x1,y1,x2,y2); 
+	}
+}
+
 //stackoverflow.com/questions/26890747/java-abstract-factory-singleton
 class ToolFactory {
 	static Map<String,Tool> map = new HashMap<>(); //singleton
@@ -292,3 +290,29 @@ class ToolFactory {
 		return t;
 	}
 }
+
+/*
+
+class Triangle extends Tool {
+	
+	private Triangle(String tool) {
+		super(tool);
+	}
+	
+	void operate(Graphics g, Map<String, Object> params) {
+		super.operate(g,params);
+		int[] xPoints = (int[]) params.get("xPoints");
+		int[] yPoints = (int[]) params.get("yPoints");
+		
+		if( xPoints.length != yPoints.length) throw new RuntimeException();
+
+		Boolean fill = (Boolean) params.get("fill");
+		
+		if( fill != null && fill ) 
+			g.fillPolygon(xPoints,yPoints, xPoints.length);
+		else 
+			g.drawPolygon(xPoints,yPoints, xPoints.length);
+	}
+}
+
+*/

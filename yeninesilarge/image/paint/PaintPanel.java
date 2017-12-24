@@ -74,6 +74,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		makeTool(pnlTools, groupDrawing, Tool.RECTANGLE);
 		makeTool(pnlTools, groupDrawing, Tool.OVAL); 
 		makeTool(pnlTools, groupDrawing, Tool.RUBBER); 
+		makeTool(pnlTools, groupDrawing, Tool.PENCIL);
 
 		makeButton(pnlTools, null, "Clear").addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -100,6 +101,18 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		checkFill.addItemListener(checkFillListener);
 		checkDash.addItemListener(checkFillListener);
 
+
+		makeButton(pnlTools, null, "Undo").addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				pnlImage.undo();
+			}
+		});
+
+		makeButton(pnlTools, null, "Redo").addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				pnlImage.redo();
+			}
+		});
 
 		// --------- IMAGE ---------------
 		GridBagConstraints constImage= new GridBagConstraints();
@@ -193,11 +206,16 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 								null,
 								createStroke(selectedTool, strokeLevel, dash), // test
 								isFill);
-			/* when marked a area with Select tool, if user tries to reselect different area
+
+			pnlImage.beginDraw(params);
+
+			/* when marked an area with Select tool, if user tries to reselect different area
 			   it should be popped and added new one. While doing this process in mouseRealesed()
-			   old one could be deleted and it will be shown on GUI. To make it happen call repaint() */
+			   old one could be deleted and it will be shown on GUI. To make it happen invokes 
+				repaint() 
+			*/
 			String s = pnlImage.peekShapeTag(); 
-			if ( s != null && s.equals(Tool.SELECT) ) 
+			if ( s != null && s.equals(Tool.SELECT) )
 				pnlImage.popShape();  
 								
 		}
@@ -209,15 +227,25 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			Component  c = e.getComponent();
 			Graphics g = c.getGraphics();
 
-
 			Point coordinates = coordinatesFromPoint(e.getComponent());
 			x2 = (int) coordinates.getX();
 			y2 = (int) coordinates.getY();	
 		
 			params.put("x2", x2);
 			params.put("y2", y2);
+
+			if( selectedTool.equals(Tool.PENCIL) || selectedTool.equals(Tool.RUBBER) ) {
+				pnlImage.completeDraw(params);
+				params = buildParams(selectedTool, x2, y2, x2, y2, 
+								color,
+								null,
+								null, // test
+								isFill);
+				
+			}			
+			//this needed to draw on the are that cleared with rectClear() method. 			
+			pnlImage.beginDraw(params);
 			
-			pnlImage.setParams(params);
 		}
 
 		@Override
@@ -227,9 +255,9 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			//we know that x2 and y2 is updating from mouseDragged event so 
 			//there is no meaning to catching those 2 points.
 
+			params.put("completed", true);
+			pnlImage.completeDraw(params);
 			
-			pnlImage.addDraw(params);
-
 		}
 
 	};
@@ -243,11 +271,11 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		return p;
 	}
 
-	Map<String, Object> buildParams(String tool, 
+	static Map<String, Object> buildParams(String tool, 
 									int x1, int y1, int x2, int y2,
 									Color c, Font font, Stroke s, boolean fill){
 		Map<String, Object> params = new HashMap<>();
-		params.put("tool", tool); //tool name, i.e. Oval, Line..
+		params.put("tag", tool); //tool name, i.e. Oval, Line..
 		params.put("x1", x1 );
 		params.put("y1", y1 );
 		params.put("x2", x2 );
@@ -256,6 +284,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		params.put("font", font);
 		params.put("stroke", s);
 		params.put("fill", fill); 
+		params.put("completed", false); // completed key represents if a drawing just completed.
+										// This is needed that seperating drawings from the others. 
 		return params;
 	}
 
@@ -267,7 +297,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 						10.0f, 
 						new float[]{ 5.0f }, 
 						0.0f );
-		}		
+		}
 
 
 		float width = 1.0f * strokeLevel;
@@ -286,12 +316,11 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 	// KeyListener events
 	@Override
 	public void keyPressed(KeyEvent e) {
-
+		
 		if( e.getKeyChar() == 127){
 			Map<String, Object> params = pnlImage.peekShape();
-				
-			if ( params != null && params.get("tool").equals(Tool.SELECT) ) {			
-				params.put("tool", Tool.DELETE);
+			if ( params != null && params.get("tag").equals(Tool.SELECT) ) {			
+				params.put("tag", Tool.DELETE);
 				pnlImage.repaint();
 			}
 
