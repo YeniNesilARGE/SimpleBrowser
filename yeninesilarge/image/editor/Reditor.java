@@ -12,92 +12,139 @@ import java.io.*;
 import java.util.Set;
 import java.util.HashSet;
 import java.awt.event.*;
+import java.util.Stack;
 
-public class Reditor extends javax.swing.JFrame 
-                    implements KeyListener,
-                    ActionListener{
+class UndoImage{
+    WritableRaster R;
+    BufferedImage bi;
+}
+
+public class Reditor extends javax.swing.JFrame {
     
 public Reditor(){init();}
 
 ImagePanel i = new ImagePanel();
 ImagePanel iTemp = new ImagePanel();
 
-private final Set<Character> pressed = new HashSet<Character>();
+//private final Set<Character> pressed = new HashSet<Character>();
 
 JFileChooser fileChooser = new JFileChooser();
-static BufferedImage BI;//current image we are worked on
-static BufferedImage FBI;
-static BufferedImage frame;
 
-static int before = 5;
-JSlider slider = new JSlider(JSlider.HORIZONTAL,0,10,5);
+Stack<UndoImage> undo = new Stack<UndoImage>();
+Stack<UndoImage> redo = new Stack<UndoImage>();
+
+static BufferedImage BI;//current image we are worked on
+static BufferedImage frame;//frame file that we will aplly to image
+
+String filePath;
 
 private void init(){
     //Buttons 
     JButton btn1 = new JButton("GrayScale");
     btn1.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            btn1ActionPerformed(evt);
+            GrayScaleButton(evt);
         }
     });
     
-    JButton btn2 = new JButton("Vinyet");
+    JButton btn2 = new JButton("Vignette");
     btn2.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            btn2ActionPerformed(evt);
+            VinyetButton(evt);
+        }
+    });
+    JButton btn21 = new JButton("VignetteWhite");
+    btn21.addActionListener(new java.awt.event.ActionListener(){
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            VinyetNegativeButton(evt);
         }
     });
     
     JButton btn3 = new JButton("RotateRigth");
     btn3.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            btn3ActionPerformed(evt);
+            RotateRigthButton(evt);
         }
     });
     JButton btn5 = new JButton("RotateLeft");
     btn5.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            btn5ActionPerformed(evt);
+            RotateLeftButton(evt);
         }
     });
     
     JButton btn4 = new JButton("Undo All Changes");
     btn4.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            btn4ActionPerformed(evt);
+            UndoAllButton(evt);
         }
     });
     JButton btn6 = new JButton("OpenImage");
     btn6.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            btn6ActionPerformed(evt);
+            OpenImageButton(evt);
         }
     });
     JButton btn7 = new JButton("Apply Frame");
     btn7.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            btn7ActionPerformed(evt);
+            ApplyFrameButton(evt);
         }
     });
     JButton btn8 = new JButton("Select Frame");
     btn8.setToolTipText("Please note quality of frame that you'll select !");
     btn8.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            btn8ActionPerformed(evt);
+            SelectFrameButton(evt);
+        }
+    });
+    JButton btn9 = new JButton("BrightUp");
+    btn9.setToolTipText("Brigthess up");
+    btn9.addActionListener(new java.awt.event.ActionListener(){
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            BrigthUpButton(evt);
+        }
+    });
+    JButton btn10 = new JButton("BrightDown");
+    btn10.setToolTipText("Brigthness down");
+    btn10.addActionListener(new java.awt.event.ActionListener(){
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            BrigthDownButton(evt);
+        }
+    });
+    JButton btn11 = new JButton("Undo");
+    btn11.addActionListener(new java.awt.event.ActionListener(){
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            UndoButton(evt);
+        }
+    });
+    JButton btn12 = new JButton("Redo");
+    btn12.addActionListener(new java.awt.event.ActionListener(){
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            RedoButton(evt);
+        }
+    });
+    JButton btn13 = new JButton("Invert");
+    btn13.addActionListener(new java.awt.event.ActionListener(){
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            InvertingColors(evt);
+        }
+    });
+    JButton btn14 = new JButton("OldSchool");
+    btn14.addActionListener(new java.awt.event.ActionListener(){
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            OldSchoolButton(evt);
+        }
+    });
+    JButton btn15 = new JButton("Save");
+    btn15.addActionListener(new java.awt.event.ActionListener(){
+        public void actionPerformed(java.awt.event.ActionEvent evt){
+            Save(evt);
         }
     });
     //Labels
     JLabel label1 = new JLabel("Brigthness");
-    
-    //Slider pane
-    slider.addMouseListener(new java.awt.event.MouseAdapter(){
-        public void mouseExited(java.awt.event.MouseEvent evt){
-            sliderMouseExited(evt);
-        }
-    });
-    //Key Action Listener
-    
-    //Grid layout
+    JLabel label2 = new JLabel("Filters");
     
     //Creating panels
     JPanel pane1 = new JPanel();
@@ -120,8 +167,11 @@ private void init(){
     gl1.setHorizontalGroup(gl1.createParallelGroup()
     .addGroup(gl1.createSequentialGroup()
         .addComponent(btn6)
+        .addComponent(btn15)
         .addComponent(btn3)
         .addComponent(btn5)
+        .addComponent(btn11)
+        .addComponent(btn12)
         .addComponent(btn4)
         .addComponent(btn8)
         .addComponent(btn7))
@@ -130,8 +180,11 @@ private void init(){
     gl1.setVerticalGroup(gl1.createSequentialGroup()
     .addGroup(gl1.createParallelGroup()
         .addComponent(btn6)
+        .addComponent(btn15)
         .addComponent(btn3)
         .addComponent(btn5)
+        .addComponent(btn11)
+        .addComponent(btn12)
         .addComponent(btn4)
         .addComponent(btn8)
         .addComponent(btn7))
@@ -145,17 +198,27 @@ private void init(){
     gl3.setHorizontalGroup(gl3.createParallelGroup()
     .addGroup(gl3.createSequentialGroup()
         .addComponent(label1)
-        .addComponent(slider)
+        .addComponent(btn9)
+        .addComponent(btn10)
+        .addComponent(label2)
         .addComponent(btn1)
-        .addComponent(btn2))
+        .addComponent(btn2)
+        .addComponent(btn21)
+        .addComponent(btn13)
+        .addComponent(btn14))
     );
     
     gl3.setVerticalGroup(gl3.createSequentialGroup()
     .addGroup(gl3.createParallelGroup()
         .addComponent(label1)
-        .addComponent(slider)
+        .addComponent(btn9)
+        .addComponent(btn10)
+        .addComponent(label2)
         .addComponent(btn1)
-        .addComponent(btn2))
+        .addComponent(btn2)
+        .addComponent(btn21)
+        .addComponent(btn13)
+        .addComponent(btn14))
     );
     
     //Adding panels to JFrame
@@ -165,28 +228,30 @@ private void init(){
     pack();
     
     setTitle("rEditor");
-    setSize(800,600);
+    setExtendedState(JFrame.MAXIMIZED_BOTH);
     setMinimumSize(new Dimension(300,300));
     setLocationRelativeTo(null);
     setDefaultCloseOperation(EXIT_ON_CLOSE);
-    //addKeyListener(this);
-    //setFocusable(true);
     setFocusTraversalKeysEnabled(false);
 }
 
-private void btn1ActionPerformed(java.awt.event.ActionEvent evt){
-    grayScaled();
+private void GrayScaleButton(java.awt.event.ActionEvent evt){
+    BI = grayScaled();
     i.setImage(BI);
 }
-private void btn2ActionPerformed(java.awt.event.ActionEvent evt){
-    vinyet();
+private void VinyetButton(java.awt.event.ActionEvent evt){
+    BI = vinyet();
     i.setImage(BI);
 }
-private void btn3ActionPerformed(java.awt.event.ActionEvent evt){
+private void VinyetNegativeButton(java.awt.event.ActionEvent evt){
+    BI = vinyetNegative();
+    i.setImage(BI);
+}
+private void RotateRigthButton(java.awt.event.ActionEvent evt){
     BI = RotateRigth();
     i.setImage(BI);
 }
-private void btn4ActionPerformed(java.awt.event.ActionEvent evt){
+private void UndoAllButton(java.awt.event.ActionEvent evt){
     if(BI != null){
         WritableRaster R = iTemp.getImage().getRaster();
         int h = R.getHeight(),w = R.getWidth();
@@ -194,35 +259,37 @@ private void btn4ActionPerformed(java.awt.event.ActionEvent evt){
         image.setData(R);
         BI = image;
         i.setImage(BI);
+        while(!undo.empty()){
+            undo.pop();
+        }
+        while(!redo.empty()){
+            redo.pop();
+        }
     }
 }
-private void btn5ActionPerformed(java.awt.event.ActionEvent evt){
+private void RotateLeftButton(java.awt.event.ActionEvent evt){
     BI = RotateLeft();
     i.setImage(BI);
 }
-public void keyPressed(KeyEvent e){
-    
-}
-public void keyReleased(KeyEvent e){
-    
-}
-public void keyTyped(KeyEvent e){
-    
-}
-public void actionPerformed(ActionEvent e){
-    
-}
-private void btn6ActionPerformed(java.awt.event.ActionEvent evt){
+private void OpenImageButton(java.awt.event.ActionEvent evt){
     //Reading file
     int returnVal = fileChooser.showOpenDialog(this);
     if(returnVal == JFileChooser.APPROVE_OPTION) {
         File file = fileChooser.getSelectedFile();
         if(getFileExt(file).equals("jpg")){
         try{
+            filePath = file.getAbsolutePath();
             i.setImage(ImageIO.read(file));
             iTemp.setImage(ImageIO.read(file));
             BI = i.getImage();
+            while(!undo.empty()){
+                undo.pop();
+            }
+            while(!redo.empty()){
+                redo.pop();
+            }
         }catch(Exception e){
+            e.printStackTrace();
             System.out.println("Error while reading file");
         }}else{
         JOptionPane.showMessageDialog(this,"Please select a 'jpg' file.");
@@ -231,28 +298,30 @@ private void btn6ActionPerformed(java.awt.event.ActionEvent evt){
     //pack(); // Same job for refreshing image pane
     i.updateUI();
 }
-private void btn7ActionPerformed(java.awt.event.ActionEvent evt){
+private void ApplyFrameButton(java.awt.event.ActionEvent evt){
     //Adding frame
     if(BI!=null&&frame!=null){
         frame = scale();
         WritableRaster R = BI.getRaster();
+        UndoImage ui = new UndoImage();
+        ui.R=R;ui.bi=BI;
+        undo.push(ui);
         WritableRaster RF = frame.getRaster();
         int[] rgb = {0,0,0};
         int w = BI.getWidth(), h = BI.getHeight();
         for(int x=0;x<w;x++){
             for(int y=0;y<h;y++){
                 RF.getPixel(x,y,rgb);
-                if(rgb[0]<250&&rgb[1]<250&&rgb[2]<250){
+                if(rgb[0]<255&&rgb[1]<255&&rgb[2]<255){
                     RF.getPixel(x,y,rgb);
                     R.setPixel(x,y,rgb);
                 }
             }
         }
-        BI.setData(R);
         i.setImage(BI);
     }
 }
-private void btn8ActionPerformed(java.awt.event.ActionEvent evt){
+private void SelectFrameButton(java.awt.event.ActionEvent evt){
     //Select frame
     //Reading file
     JOptionPane.showMessageDialog(this,"Please note quality of frame that you'll select !");
@@ -269,76 +338,249 @@ private void btn8ActionPerformed(java.awt.event.ActionEvent evt){
         }
     }
 }
-private void sliderMouseExited(java.awt.event.MouseEvent evt){
-    brightness(slider.getValue());
+private void BrigthUpButton(java.awt.event.ActionEvent evt){
+    double con = 1.2;
+    BI = brightness(con);
     i.setImage(BI);
-    before=slider.getValue();
 }
-private void grayScaled(){
+private void BrigthDownButton(java.awt.event.ActionEvent evt){
+    double con = 0.8;
+    BI = brightness(con);
+    i.setImage(BI);
+}
+private void UndoButton(java.awt.event.ActionEvent evt){
+    if(!undo.empty()){
+        UndoImage ui = new UndoImage();
+        UndoImage ui2 = new UndoImage();
+        ui2.bi = BI;
+        ui2.R = BI.getRaster();
+        redo.push(ui2);
+        ui = undo.pop();
+        BufferedImage image = new BufferedImage(ui.bi.getWidth(),ui.bi.getHeight(),BufferedImage.TYPE_INT_RGB);
+        image.setData(ui.R);
+        BI = image;
+        i.setImage(BI);
+    }else{
+        JOptionPane.showMessageDialog(this,"Nothing to undo !");
+    }
+}
+private void RedoButton(java.awt.event.ActionEvent evt){
+    if(!redo.empty()){
+        UndoImage ui = new UndoImage();
+        UndoImage ui2 = new UndoImage();
+        ui2.bi = BI;
+        ui2.R = BI.getRaster();
+        undo.push(ui2);
+        ui = redo.pop();
+        BufferedImage image = new BufferedImage(ui.bi.getWidth(),ui.bi.getHeight(),BufferedImage.TYPE_INT_RGB);
+        image.setData(ui.R);
+        BI = image;
+        i.setImage(BI);
+    }else{
+        JOptionPane.showMessageDialog(this,"Nothing to redo");
+    }
+}
+private void InvertingColors(java.awt.event.ActionEvent evt){
+    BI = Invert();
+    i.setImage(BI);
+}
+private void OldSchoolButton(java.awt.event.ActionEvent evt){
     if(BI != null){
     WritableRaster R = BI.getRaster();
+    UndoImage ui = new UndoImage();
+    ui.R=R;ui.bi=BI;
+    undo.push(ui);
+    double con1 = 0.4, con2 = 0.5, con3 = 0.6;
+    int m;
     int[] rgb ={0,0,0};
     int w = BI.getWidth(), h = BI.getHeight();
     for(int x=0;x<w;x++){
         for(int y=0;y<h;y++){
-            R.getPixel(x,y,rgb);
-            int m = (rgb[0]+rgb[1]+rgb[2])/3;
-            rgb[0] = m;rgb[1] = m;rgb[2] = m;
-            R.setPixel(x,y,rgb);
+                R.getPixel(x,y,rgb);
+                rgb[0] = (int) (rgb[0] * con1);
+                rgb[1] = (int) (rgb[1] * con1);
+                rgb[2] = (int) (rgb[2] * con1);
+                R.setPixel(x,y,rgb);
+            }
+            
         }
-        BI.setData(R);
-    }
+    
+    i.setImage(BI);
     }else{
         JOptionPane.showMessageDialog(this,"Please open a 'jpg' file.");
     }
 }
-private void brightness(int value){
+private void Save(java.awt.event.ActionEvent evt){
     if(BI != null){
-    WritableRaster R = BI.getRaster();
+        try{
+            ImageIO.write(BI,"jpg",new File(filePath));
+            JOptionPane.showMessageDialog(this,"Saved Succesfully !");
+        } catch (IOException e){}
+    }else{
+        JOptionPane.showMessageDialog(this,"Please open a 'jpg' file.");
+    }
+}
+private BufferedImage Invert(){
+    if(BI != null){
+    WritableRaster WRcur = BI.getRaster();
+    UndoImage ui = new UndoImage();
+    ui.R=WRcur;ui.bi=BI;
+    undo.push(ui);
     int[] rgb ={0,0,0};
     int w = BI.getWidth(), h = BI.getHeight();
+    BufferedImage image = new BufferedImage(w,h,BufferedImage.TYPE_INT_RGB);
+    WritableRaster WRnew = image.getRaster();
     for(int x=0;x<w;x++){
         for(int y=0;y<h;y++){
-            R.getPixel(x,y,rgb);
-            rgb[0]+=(value-before)*10;
-            rgb[1]+=(value-before)*10;
-            rgb[2]+=(value-before)*10;
-            if(bound(rgb)){R.setPixel(x,y,rgb);}
+            WRcur.getPixel(x,y,rgb);
+            rgb[0] = 255-rgb[0];
+            rgb[1] = 255-rgb[1];
+            rgb[2] = 255-rgb[2];
+            WRnew.setPixel(x,y,rgb);
         }
-        BI.setData(R);
     }
-    }else{}
+    image.setData(WRnew);
+    return image;
+    }else{
+        JOptionPane.showMessageDialog(this,"Please open a 'jpg' file.");
+        return null;
+    }
 }
-private void vinyet(){
+private BufferedImage grayScaled(){
     if(BI != null){
-    WritableRaster R = BI.getRaster();
+    WritableRaster WRcur = BI.getRaster();
+    UndoImage ui = new UndoImage();
+    ui.R=WRcur;ui.bi=BI;
+    undo.push(ui);
+    int m;
     int[] rgb ={0,0,0};
-    
     int w = BI.getWidth(), h = BI.getHeight();
+    BufferedImage image = new BufferedImage(w,h,BufferedImage.TYPE_INT_RGB);
+    WritableRaster WRnew = image.getRaster();
+    for(int x=0;x<w;x++){
+        for(int y=0;y<h;y++){
+            WRcur.getPixel(x,y,rgb);
+            m = (rgb[0]+rgb[1]+rgb[2])/3;
+            rgb[0] = m;rgb[1] = m;rgb[2] = m;
+            WRnew.setPixel(x,y,rgb);
+        }
+    }
+    image.setData(WRnew);
+    return image;
+    }else{
+        JOptionPane.showMessageDialog(this,"Please open a 'jpg' file.");
+        return null;
+    }
+}
+private BufferedImage brightness(double con){
+    if(BI != null){
+    WritableRaster WRcur = BI.getRaster();
+    UndoImage ui = new UndoImage();
+    ui.R=WRcur;ui.bi=BI;
+    undo.push(ui);
+    int[] rgb ={0,0,0};
+    int w = BI.getWidth(), h = BI.getHeight();
+    BufferedImage image = new BufferedImage(w,h,BufferedImage.TYPE_INT_RGB);
+    WritableRaster WRnew = image.getRaster();
+    for(int x=0;x<w;x++){
+        for(int y=0;y<h;y++){
+            WRcur.getPixel(x,y,rgb);
+            rgb[0] = (int) (rgb[0] * con);
+            rgb[1] = (int) (rgb[1] * con);
+            rgb[2] = (int) (rgb[2] * con);
+            if(rgb[0]>254){rgb[0] = 255;}
+            if(rgb[1]>254){rgb[1] = 255;}
+            if(rgb[2]>254){rgb[2] = 255;}
+            WRnew.setPixel(x,y,rgb);
+        }
+    }
+    image.setData(WRnew);
+    return image;
+}
+return null;
+}
+private BufferedImage vinyet(){
+    if(BI != null){
+    WritableRaster WRcur = BI.getRaster();
+    UndoImage ui = new UndoImage();
+    ui.R=WRcur;ui.bi=BI;
+    undo.push(ui);
+    int[] rgb ={0,0,0};
+    int w = BI.getWidth(), h = BI.getHeight();
+    BufferedImage image = new BufferedImage(w,h,BufferedImage.TYPE_INT_RGB);
+    WritableRaster WRnew = image.getRaster();
     int midx = w/2 , midy = h/2 ;
+    double con = 1;
     int dist = 0;
     int ort=0;
     int max = (int) getDist(midx-0,midy-0);
-    for(int x = 0; x < 3; x++ ){
-        for(int y = 0; y < 3; y++ ){
+    for(int x = 0; x < w; x++ ){
+        for(int y = 0; y < h; y++ ){
             dist = (int) getDist(midx-x,midy-y);
-            R.getPixel(x,y,rgb);
-            ort = (rgb[0]+rgb[1]+rgb[2])/3;
-            while(controlBound(ort,max,dist)){
-                rgb[0]+=3;
-                rgb[1]+=3;
-                rgb[2]+=3;
-                ort = (rgb[0]+rgb[1]+rgb[2])/3;
+            WRcur.getPixel(x,y,rgb);
+            con = 1-((double) dist/max);
+            rgb[0] = (int) (rgb[0] * con);
+            rgb[1] = (int) (rgb[1] * con);
+            rgb[2] = (int) (rgb[2] * con);
+            WRnew.setPixel(x,y,rgb);
             }
-            R.setPixel(x,y,rgb);
-        }}
+        }
+        image.setData(WRnew);
+        return image;
     }else{
         JOptionPane.showMessageDialog(this,"Please open a 'jpg' file.");
+        return null;
+    }
+}
+private BufferedImage vinyetNegative(){
+    if(BI != null){
+    WritableRaster WRcur = BI.getRaster();
+    UndoImage ui = new UndoImage();
+    ui.R=WRcur;ui.bi=BI;
+    undo.push(ui);
+    int[] rgb ={0,0,0};
+    int w = BI.getWidth(), h = BI.getHeight();
+    BufferedImage image = new BufferedImage(w,h,BufferedImage.TYPE_INT_RGB);
+    WritableRaster WRnew = image.getRaster();
+    int midx = w/2 , midy = h/2 ;
+    double con = 1;
+    int dist = 0;
+    int ort=0;
+    int max = (int) getDist(midx-0,midy-0);
+    for(int x=0;x<w;x++){//inverting colors for negative vignette effect
+        for(int y=0;y<h;y++){
+            WRcur.getPixel(x,y,rgb);
+            rgb[0] = 255-rgb[0];
+            rgb[1] = 255-rgb[1];
+            rgb[2] = 255-rgb[2];
+            WRnew.setPixel(x,y,rgb);
+        }
+    }
+    image.setData(WRnew);
+    for(int x = 0; x < w; x++ ){
+        for(int y = 0; y < h; y++ ){
+            dist = (int) getDist(midx-x,midy-y);
+            WRnew.getPixel(x,y,rgb);
+            con = 1-((double) dist/max);
+            rgb[0] = 255-(int) (rgb[0] * con);
+            rgb[1] = 255-(int) (rgb[1] * con);
+            rgb[2] = 255-(int) (rgb[2] * con);
+            WRnew.setPixel(x,y,rgb);
+            }
+        }
+        image.setData(WRnew);
+        return image;
+    }else{
+        JOptionPane.showMessageDialog(this,"Please open a 'jpg' file.");
+        return null;
     }
 }
 private BufferedImage RotateRigth(){
     if(BI != null){
     WritableRaster WRcur = BI.getRaster();
+    UndoImage ui = new UndoImage();
+    ui.R=WRcur;ui.bi=BI;
+    undo.push(ui);
     int h = WRcur.getHeight(),w = WRcur.getWidth();
     BufferedImage image = new BufferedImage(h,w,BufferedImage.TYPE_INT_RGB);
     
@@ -361,6 +603,9 @@ private BufferedImage RotateRigth(){
 private BufferedImage RotateLeft(){
     if(BI != null){
     WritableRaster WRcur = BI.getRaster();
+    UndoImage ui = new UndoImage();
+    ui.R=WRcur;ui.bi=BI;
+    undo.push(ui);
     int h = WRcur.getHeight(),w = WRcur.getWidth();
     BufferedImage image = new BufferedImage(h,w,BufferedImage.TYPE_INT_RGB);
     
@@ -394,11 +639,6 @@ private BufferedImage scale(){
 private boolean bound(int arr[]){
     if(arr[0]>255||arr[1]>255||arr[2]>255){return false;}
     if(arr[0]<0||arr[1]<0||arr[2]<0){return false;}
-    return true;
-}
-private boolean controlBound(int ort,int max,int dist){
-    int control = (dist*120)/max;
-    if(ort>control-10&&ort<control+10){return false;}
     return true;
 }
 private double getDist(int x,int y){
