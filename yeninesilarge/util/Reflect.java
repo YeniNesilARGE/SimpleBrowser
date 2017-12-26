@@ -15,6 +15,16 @@ public class Reflect {
 		return c;
 	}
 
+	public static Class getClass(String fullName) {
+		Class c=null;
+		try{
+			c = Class.forName(fullName);
+		} catch(ClassNotFoundException ex) {
+			
+		}
+		return c;
+	}
+
 	public static Package getPackage(Object o){
 		Package p = o.getClass().getPackage();
 		return p;
@@ -32,6 +42,7 @@ public class Reflect {
 
 	public static Object newInstance(Constructor c, Object... initArgs) {
 		Object o = null;
+
 		try{
 			o = c.newInstance(initArgs);
 		} catch(Exception ex) {
