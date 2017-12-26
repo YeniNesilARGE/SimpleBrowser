@@ -132,7 +132,7 @@ public class VideoPlayer extends javax.swing.JFrame {
     public VideoPlayer() {
         
         idrw.setThis(this);
-        id = new ImageDisplay();
+        id = new ImagePanel();
         
         try {
             Graphics2D g = image.createGraphics();

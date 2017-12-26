@@ -20,6 +20,7 @@ import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.FilenameFilter;
 
 import javax.swing.*;
 
@@ -27,27 +28,21 @@ public class Browser extends JFrame {
 
 	public static void main(String... args){
 
-		ApplicationManager appManager = new ApplicationManager();
+		ApplicationManager appM = ApplicationManager.getInstance();
 		Browser browser = new Browser();
 
-		SimpleApplication app = appManager.load("Paint");
-		
-		appManager.createAssociation(app);
 
 		File f = new File("/home/bilalekrem/Desktop/SimpleBrowser/yeninesilarge/images/dog.jpg");
 
-		String extension = browser.getExtension(f);
-		
+
+		browser.loadApplications();
+/*		String extension = browser.getExtension(f);		
 		app = appManager.getApplications(extension).get(0);
 		app.init(50, 50, 900, 900);
-		app.run(f);
+		app.run(f);*/
 
-		//buildFrame(paintPanel.title, panel, 300, 300, 800, 800);
 
-		browser.pack();
-		browser.setVisible(true);
 	}
-
 
 	String getExtension(File f) {
 		if ( f.isDirectory() ) return null;
@@ -56,9 +51,39 @@ public class Browser extends JFrame {
 		String fileName = f.getName();
 		int i = fileName.lastIndexOf('.');
 		if (i >= 0) {
-			extension = fileName.substring(i+1);
+			cdextension = fileName.substring(i+1);
 		}
 		return extension;
+	}
+
+	void loadApplications() {
+		int counter = 0;
+		File yna = new File(ApplicationManager.USER_HOME, ApplicationManager.DIR );
+		if( !yna.exists() )  return;
+
+		FilenameFilter textFilter = new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				String lowercaseName = name.toLowerCase();
+				if (lowercaseName.endsWith(ApplicationManager.EXT)) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+		};
+
+		ApplicationManager appManager = ApplicationManager.getInstance();
+		for (File file : yna.listFiles() ) {
+			if (!file.isDirectory()) { 
+				String applicationName = file.getName();
+				SimpleApplication app = appManager.load(applicationName);
+				appManager.registerApplication(app);
+			}
+		}
+
+		
+				
+
 	}
 
 }
