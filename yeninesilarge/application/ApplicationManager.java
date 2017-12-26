@@ -22,17 +22,28 @@ import java.io.IOException;
 
 public class ApplicationManager extends Properties {
 
-	static final File userhome = new File(System.getProperty("user.home"));
-	static final String dir = "yna";
-
+	public static final File USER_HOME = new File(System.getProperty("user.home"));
+	public static final String DIR = "yna";
 	public static final String EXT = ".app";
+
 	private static final String PROP_NAME = "name", PROP_CLASSPATH = "classpath",
 						 		PROP_TITLE = "title", PROP_EXTENSIONS = "extensions";
 
 	public Map<String, List<SimpleApplication>> extManager;
+	public Map<String, SimpleApplication> applications;
 
-	public ApplicationManager(){
+	private static ApplicationManager singleton = null;
+
+	private ApplicationManager(){
 		extManager = new HashMap<>();
+		applications = new HashMap<>();
+	}
+
+	public static ApplicationManager getInstance() {
+		if ( singleton == null ) 
+			singleton = new ApplicationManager();
+	
+		return singleton;
 	}
 
 	public List<SimpleApplication> getApplications(String extension) throws ExtensionNotDefinedException {
@@ -43,13 +54,9 @@ public class ApplicationManager extends Properties {
 		return apps;
 	}
 
-	public void createAssociation(SimpleApplication app) {
-		for ( String extension : app.extensions ) {
-			updateExtension(extension, app);
-		}
-	}
 	
-	public void updateExtension(String extension, SimpleApplication app){
+	public void createAssociation(String extension, SimpleApplication app){
+		extension = extension.toLowerCase();
 		List<SimpleApplication> apps = extManager.get(extension);
 		if ( apps == null ) {
 			apps = new ArrayList<>();
@@ -59,9 +66,21 @@ public class ApplicationManager extends Properties {
 		apps.add(app);
 	}
 
+	public void registerApplication(SimpleApplication app) {
+		for ( String extension : app.extensions ) {
+			createAssociation(extension, app);
+		}
+
+		applications.put(app.name, app);
+	}
+
+	public SimpleApplication getApplication(String name) {
+		return applications.get(name);
+	}
+
 	// return result
 	public boolean store(String name, String classpath, String title, String extensions){
-		File yna = new File(userhome, dir);
+		File yna = new File(USER_HOME, DIR);
 		if( !yna.exists() ) yna.mkdir();
 		
 		File application = new File(yna, name + EXT ); //AppName.app
@@ -90,7 +109,7 @@ public class ApplicationManager extends Properties {
 	public SimpleApplication load(String appName){
 		SimpleApplication app = null;
 
-		File yna = new File(userhome, dir);
+		File yna = new File(USER_HOME, DIR);
 		if( yna.exists() && yna.isDirectory() ){
 			File application = new File(yna, appName + EXT ); //AppName.app
 			InputStream in = null;
@@ -123,10 +142,5 @@ public class ApplicationManager extends Properties {
 		return app;
 	}
 
-	class ExtensionNotDefinedException extends RuntimeException{
-		ExtensionNotDefinedException(String message) {
-			super(message);
-		}
-	}
-
 }
+

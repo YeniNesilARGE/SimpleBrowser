@@ -100,7 +100,7 @@ public class AppRegister extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void doneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_doneActionPerformed
-            ApplicationManager a = new ApplicationManager();
+            ApplicationManager a = ApplicationManager.getInstance();
             
         if (nameT.getText().length() != 0 && cpT.getText().length() != 0 && titleT.getText().length() != 0 && extT.getText().length() != 0) {
             a.store(nameT.getText(), cpT.getText(), titleT.getText(), extT.getText());

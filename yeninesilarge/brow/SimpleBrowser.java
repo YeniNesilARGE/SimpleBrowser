@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package yeninesilarge.brow;
 
 import java.awt.Color;
@@ -17,8 +12,11 @@ import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
-import yeninesilarge.application.ApplicationManager;
-import yeninesilarge.application.SimpleApplication;
+import java.util.Set;
+import java.util.HashSet;
+
+import yeninesilarge.application.*;
+
 
 /**
  *
@@ -26,22 +24,22 @@ import yeninesilarge.application.SimpleApplication;
  */
 public class SimpleBrowser extends javax.swing.JFrame implements KeyListener {
 
-    DefaultListModel<String> model;
-    File[] listOfFiles;
-    File dosya;
-    String parent, str, txtFormat, format;
-    String title ="        Current path : ";
-    List a ;
-
+    private DefaultListModel<String> model;
+    private String currentPath;
+	private Browser browser = new Browser();
     public SimpleBrowser() {
         initComponents();
+        model = new DefaultListModel<>();
+        listFile.setModel(model);
+        listFile.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        jList1.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        parent = "C:\\";
-        filesOfFolder(parent);//jList e klasördeki dosyaları ekleyen metot
+        currentPath = System.getProperty("user.home");
 
-        jList1.addKeyListener(this);
+        filesOfFolder(currentPath);//jList e klasördeki dosyaları ekleyen metot
 
+        listFile.addKeyListener(this);
+
+		browser.loadApplications();
     }
 
     String getExtension(File f) {
@@ -57,50 +55,160 @@ public class SimpleBrowser extends javax.swing.JFrame implements KeyListener {
         return extension;
     }
 
-    public void filesOfFolder(String yol) {
-        model = new DefaultListModel<>();
-        jList1.setModel(model); //jList oluşturuldu.
+    public void filesOfFolder(String path) {
+		File file = new File(path); 
+		if( file.getParent() == null ) 
+			return;
+	
+		model.removeAllElements();
         model.add(0, "../..");
-        dosya = new File(yol); //file alındı
-        parent = dosya.getParent(); // file ın bulunduğu klasör pathi
-        this.setTitle(title + dosya.getPath());
-        listOfFiles = dosya.listFiles(); //klasördeki dosyaların tutulduğu liste
+	
+        File[] listOfFiles = file.listFiles(); 
+		if(listOfFiles == null ) return;
         for (int i = 0; i < listOfFiles.length; i++) {
-            model.addElement(listOfFiles[i].getName()); //jlist e dosyaları ekleme
+            model.addElement(listOfFiles[i].getName()); 
         }
+
+        currentPath = file.getPath(); //updates parent
+
+        this.setTitle(file.getPath());
     }
 
-    public void keyReleased(KeyEvent e) { }
+    public void keyReleased(KeyEvent e) { } //not uses
 
-    public void keyTyped(KeyEvent e) { }
+    public void keyTyped(KeyEvent e) { } // not uses
 
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            a = jList1.getSelectedValuesList();
-            System.out.println(a);
-            jButton1ActionPerformed(null);
-        }
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {//todo
+            List<String> selectedFiles = listFile.getSelectedValuesList();
+ 			
+			if ( selectedFiles.size() == 1 ) {
+				File file = new File(currentPath, selectedFiles.get(0) );
+
+				if ( file.isDirectory() ) {
+				    String path = file.getPath();
+				    filesOfFolder(path);
+					return;
+				}
+			}
+			
+
+			if ( !isListSameCategory(selectedFiles) ) return;
+
+			File[] files = new File[selectedFiles.size()];
+			for ( int i = 0; i < selectedFiles.size(); i++ ) {
+				String file = selectedFiles.get(i);
+				
+				File f = new File(currentPath, file);
+				if( f.isDirectory() ) return;
+				
+				files[i] = f; 
+	
+			}
+
+			String extension = getExtension(files[0]);
+
+			runWith(extension, files);
+				
+        } else if (e.getKeyCode() == KeyEvent.VK_F5){
+			browser.loadApplications();
+		}
     }
 
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+	private void runWith(String extension, File[] files) {
+		ApplicationManager appManager = ApplicationManager.getInstance();
+		List<SimpleApplication> appList;
+		try {
+			appList = appManager.getApplications(extension);
+		} catch ( ExtensionNotDefinedException ex ) {
+			JOptionPane.showMessageDialog(this, "EXTENSION BULUNAMADI.");
+			return;
+		}
 
-        jButton1 = new javax.swing.JButton();
+		String[] options = new String[appList.size()];
+		for ( int i = 0; i < appList.size(); i++ ) {
+			SimpleApplication app = appList.get(i);
+			options[i] = app.name;
+		}
+		int reply = JOptionPane.showOptionDialog(this, "\n" + " Please choose a program..." + "\n\n", "Program Selecter",
+						 JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
+		if( reply == -1 ) return;
+		SimpleApplication app = appList.get(reply);
+		app.init(0,0,500,500);
+		app.run(files);
+	}
+
+	private boolean isListSameCategory(List<String> fileList) {
+		Set<String> extensions = new HashSet<>();
+
+		String extension = Browser.getExtension(fileList.get(0));
+		extensions.add(extension);
+		for ( int i = 1; i<fileList.size(); i++ ){
+			extension = Browser.getExtension(fileList.get(i));
+			if ( extensions.add(extension) ) return false;
+		}
+
+		return true;
+	}
+
+    private void listFileMouseClicked(java.awt.event.MouseEvent evt) {
+
+        if (evt.getClickCount() == 2) {
+            // ../.. 
+            if (listFile.getSelectedIndex() == 0) {
+				File file = new File(currentPath);
+				String path = file.getParent();
+				filesOfFolder(path); // üst dosyaya geri dönülür.
+				return;
+            }
+
+            String name = (String) listFile.getSelectedValue();
+			File file = new File(currentPath, name);
+
+            if ( file.isDirectory() ) {
+                String path = file.getPath();
+                filesOfFolder(path);
+            }
+        }
+
+    }
+
+   private void openCalendarActionPerformed(java.awt.event.ActionEvent evt) {
+        ApplicationManager appManager = ApplicationManager.getInstance();
+        SimpleApplication app = appManager.load("Calendar");
+
+		File f = null;
+        app.init(50, 50, 900, 900);
+        app.run(f);
+    }
+
+    private void btnApplicationRegisterActionPerformed(java.awt.event.ActionEvent evt) {
+        AppRegister a = new AppRegister();
+        a.setVisible(true);
+    }
+
+    public static void main(String args[]) {
+		new SimpleBrowser().setVisible(true);
+
+    }
+
+    private javax.swing.JButton btnApplicationRegister;
+    private javax.swing.JLabel lblFileList;
+    private javax.swing.JList listFile;
+    private javax.swing.JScrollPane scroolPane;
+    private javax.swing.JButton openCalendar;
+
+	// netbeans cop
+	private void initComponents() {
+
         openCalendar = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
-        jLabel1 = new javax.swing.JLabel();
-        jButton4 = new javax.swing.JButton();
+        scroolPane = new javax.swing.JScrollPane();
+        listFile = new javax.swing.JList();
+        lblFileList = new javax.swing.JLabel();
+        btnApplicationRegister = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        jButton1.setText("Select App");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
 
         openCalendar.setText("Calendar");
         openCalendar.addActionListener(new java.awt.event.ActionListener() {
@@ -109,19 +217,19 @@ public class SimpleBrowser extends javax.swing.JFrame implements KeyListener {
             }
         });
 
-        jList1.addMouseListener(new java.awt.event.MouseAdapter() {
+        listFile.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jList1MouseClicked(evt);
+                listFileMouseClicked(evt);
             }
         });
-        jScrollPane1.setViewportView(jList1);
+        scroolPane.setViewportView(listFile);
 
-        jLabel1.setText("File List");
+        lblFileList.setText("File List");
 
-        jButton4.setText("App Register");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
+        btnApplicationRegister.setText("App Register");
+        btnApplicationRegister.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
+                btnApplicationRegisterActionPerformed(evt);
             }
         });
 
@@ -133,16 +241,14 @@ public class SimpleBrowser extends javax.swing.JFrame implements KeyListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(30, 30, 30)
-                        .addComponent(jButton4)
-                        .addGap(52, 52, 52)
-                        .addComponent(jButton1)
+                        .addComponent(btnApplicationRegister)
                         .addGap(31, 31, 31)
                         .addComponent(openCalendar))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(39, 39, 39)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 349, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(lblFileList)
+                            .addComponent(scroolPane, javax.swing.GroupLayout.PREFERRED_SIZE, 349, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(25, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -150,156 +256,17 @@ public class SimpleBrowser extends javax.swing.JFrame implements KeyListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton4)
-                    .addComponent(jButton1)
+                    .addComponent(btnApplicationRegister)
                     .addComponent(openCalendar))
                 .addGap(0, 22, Short.MAX_VALUE)
-                .addComponent(jLabel1)
+                .addComponent(lblFileList)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 516, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(scroolPane, javax.swing.GroupLayout.PREFERRED_SIZE, 516, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
 
         pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO 
-        String[] options = {"Bilalinki", "Saliminki", "Furkanınki"};//istediğin kadar buton çıkartabilirsin...
-        int reply = JOptionPane.showOptionDialog(this, "\n" + " Please choose a program..." + "\n\n", "Program Selecter", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
-        if (reply == 0) {
-            System.out.println("1");
-            ApplicationManager appManager = new ApplicationManager();
-            //Browser browser = new Browser();
-
-            SimpleApplication app = appManager.load("Paint");
-
-            appManager.createAssociation(app);
-
-            File f = new File("C:\\Users\\nskml\\Desktop\\Dosyalar\\Genel\\20449271_1632983346753166_4164704589958374336_o.jpg");
-
-            //String extension = browser.getExtension(f);
-
-            //app = appManager.getApplications(extension).get(0);
-            app.init(50, 50, 900, 900);
-            app.run(f);
-
-            //buildFrame(paintPanel.title, panel, 300, 300, 800, 800);
-           // browser.pack();
-            //browser.setVisible(true);
-        } else if (reply == 1) {
-            System.out.println("2");
-
-        } else if (reply == 2) {
-            System.out.println("3");
-        } else if (reply == -1) {
-            System.out.println("çıktı");
-        }
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void openCalendarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openCalendarActionPerformed
-        // TODO add your handling code here:
-        ApplicationManager appManager = new ApplicationManager();
-        //Browser browser = new Browser();
-
-        SimpleApplication app = appManager.load("calendar");
-
-        appManager.createAssociation(app);
-
-        File f = null;
-
-        app.init(50, 50, 900, 900);
-        app.run(f);
-
-        //buildFrame(paintPanel.title, panel, 300, 300, 800, 800);
-       // browser.pack();
-       // browser.setVisible(true);
-    }//GEN-LAST:event_openCalendarActionPerformed
-
-    private void jList1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jList1MouseClicked
-        // TODO add your handling code here:
-        if (evt.getClickCount() == 2) {
-            
-            // ../.. ile parenta geçiş
-            if (jList1.getSelectedIndex() == 0) {
-                if (dosya.getPath().equals("C:\\")) {
-                    System.out.println("C:\\ nin parentına geçemezsin.");
-                } else {
-                    filesOfFolder(parent); // üst dosyaya geri dönülür.
-                }
-            }
-
-            // tıklanılan dosyanın file değeri = listOfFiles[i]
-            String yol = "";
-            String name = (String) jList1.getSelectedValue();
-            for (int i = 0; i < listOfFiles.length; i++) {
-                if (listOfFiles[i].getName().equals(name) && listOfFiles[i].isDirectory()) {
-                    // klasörse içine girilir.
-                    yol = listOfFiles[i].getPath();
-                    filesOfFolder(yol);
-                } else if (listOfFiles[i].getName().equals(name) && listOfFiles[i].isFile()) {
-                    format = getExtension(listOfFiles[i]);
-                    System.out.println(format);
-
-                }
-
-            }
-        }
-
-
-    }//GEN-LAST:event_jList1MouseClicked
-
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
-
-        AppRegister a = new AppRegister();
-        a.setVisible(true);
-
-    }//GEN-LAST:event_jButton4ActionPerformed
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(SimpleBrowser.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(SimpleBrowser.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(SimpleBrowser.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(SimpleBrowser.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new SimpleBrowser().setVisible(true);
-            }
-        });
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JList jList1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton openCalendar;
-    // End of variables declaration//GEN-END:variables
 
 }

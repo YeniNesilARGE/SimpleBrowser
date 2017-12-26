@@ -1,6 +1,9 @@
 package yeninesilarge.image.paint;
 
+import yeninesilarge.application.ApplicationManager;
 import yeninesilarge.image.ImagePanel;
+
+import java.awt.image.BufferedImage;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
@@ -140,6 +143,29 @@ public class PaintingPanel extends ImagePanel{
 		} while ( temp != null && !((Boolean)temp.get("completed")) );
 
 		repaint();
+	}
+
+	public void write(String imageName) {
+		
+		try { 
+			BufferedImage img = getImage();
+			Graphics g = img.createGraphics();
+
+			for( Map<String, Object> params : shapes ) {
+				String tag = params.get("tag").toString();
+				Tool t = ToolFactory.getInstance(tag);
+				t.operate(g, params);
+			}
+
+			File yna = new File(ApplicationManager.USER_HOME, ApplicationManager.DIR);
+			if( !yna.exists() ) yna.mkdir();
+
+			File imageFile = new File(yna, imageName);
+
+			ImageIO.write(img, "png", imageFile); 
+		}catch (Exception x){
+	
+		}
 	}
 
 }
