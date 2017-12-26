@@ -39,18 +39,18 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		return frame;
 	}
 
-	PaintPanel(){
-		init();
+	public PaintPanel(File f){
+		init(f);
 	}
 
 	public static void main(String... argv){
-		
-		PaintPanel pp = new PaintPanel();
+		File sampleFile = new File("yeninesilarge/images","dog.jpg");
+		PaintPanel pp = new PaintPanel(sampleFile);
 
 		buildFrame("Simple Paint", pp, 500, 50, 900, 900);
 	}
 
-	private void init(){
+	private void init(File file){
 		setLayout(new GridBagLayout());
 
 		// --------- TOOLS ---------------
@@ -70,6 +70,35 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		pnlTools.setLayout(new BoxLayout(pnlTools, BoxLayout.PAGE_AXIS));
 
 		ButtonGroup groupDrawing = new ToolButtonGroup(this);
+	
+		JLabel lblStrokeLevel = new JLabel("Stroke Level");
+		JComboBox<Integer> cmbStrokeLevel = new JComboBox(); // stroke level	
+		for(int i = 1; i < 5; i++) {
+			cmbStrokeLevel.addItem(i);
+		}
+		//stackoverflow.com/questions/18405660/how-to-set-component-size-inside-container-with-boxlayout
+		cmbStrokeLevel.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbStrokeLevel.getMinimumSize().height)); 
+
+		JCheckBox checkFill = new JCheckBox(FILL); //fill
+
+		JCheckBox checkDash = new JCheckBox(DASH); 		//dash
+
+		cmbStrokeLevel.addItemListener(strokeLevelListener);
+		checkFill.addItemListener(checkFillListener);
+		checkDash.addItemListener(checkFillListener);
+
+		makeButton(pnlTools, null, "New Page").addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				pnlImage.newPainting();
+			}
+		});
+		makeButton(pnlTools, null, "Clear Drawings").addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				pnlImage.removeShapes();
+			}
+		});	
+
+		makeComponent(pnlTools, makeSeparator(), null);
 		makeTool(pnlTools, groupDrawing, Tool.SELECT);
 		makeTool(pnlTools, groupDrawing, Tool.LINE);
 		makeTool(pnlTools, groupDrawing, Tool.RECTANGLE);
@@ -77,32 +106,13 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		makeTool(pnlTools, groupDrawing, Tool.RUBBER); 
 		makeTool(pnlTools, groupDrawing, Tool.PENCIL);
 
-		makeButton(pnlTools, null, "Clear").addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				pnlImage.removeShapes();
-			}
-		});
-
-		JComboBox<Integer> cmbStrokeLevel = new JComboBox(); // stroke level	
-		for(int i = 1; i < 5; i++) {
-			cmbStrokeLevel.addItem(i);
-		}
+		makeComponent(pnlTools, makeSeparator(), null);
+		makeComponent(pnlTools, lblStrokeLevel, null);
 		makeComponent(pnlTools, cmbStrokeLevel, null);
-		//stackoverflow.com/questions/18405660/how-to-set-component-size-inside-container-with-boxlayout
-		cmbStrokeLevel.setMaximumSize(new Dimension(Integer.MAX_VALUE, cmbStrokeLevel.getMinimumSize().height)); 
-	
-
-		JCheckBox checkFill = new JCheckBox(FILL); //fill
 		makeComponent(pnlTools, checkFill, FILL);
-
-		JCheckBox checkDash = new JCheckBox(DASH); 		//dash
 		makeComponent(pnlTools, checkDash, DASH);
 
-		cmbStrokeLevel.addItemListener(strokeLevelListener);
-		checkFill.addItemListener(checkFillListener);
-		checkDash.addItemListener(checkFillListener);
-
-
+		makeComponent(pnlTools, makeSeparator(), null);
 		makeButton(pnlTools, null, "Undo").addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				pnlImage.undo();
@@ -115,13 +125,6 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			}
 		});
 
-		makeButton(pnlTools, null, "New").addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				pnlImage.newPainting();
-			}
-		});
-
-
 		// --------- IMAGE ---------------
 		GridBagConstraints constImage= new GridBagConstraints();
 		constImage.gridx = 3;
@@ -133,8 +136,7 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		pnlImage = new PaintingPanel();
 		pnlImage.addMouseListener(mouseListener); // listens mouse pressed and released events
 		pnlImage.addMouseMotionListener(mouseListener); // listens mouse dragged event
-		File sampleFile = new File("yeninesilarge/images","dog.jpg");
-		try { pnlImage.setImage(sampleFile); } 
+		try { pnlImage.setImage(file); } 
 		catch(IOException e) { e.printStackTrace(); };
 		add(pnlImage, constImage);
 
@@ -192,6 +194,13 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			b.setActionCommand(name);
 		}
 		return component;
+	}
+
+	//stackoverflow.com/questions/20802330/java-swing-box-layout-with-separator
+	private JSeparator makeSeparator(){
+		JSeparator seperator = new JSeparator(SwingConstants.HORIZONTAL);
+		seperator.setMaximumSize( new Dimension(Integer.MAX_VALUE, 1) );
+		return seperator;
 	}
 
 	@Override
