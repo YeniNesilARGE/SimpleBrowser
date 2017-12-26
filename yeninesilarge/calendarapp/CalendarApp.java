@@ -37,8 +37,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import yeninesilarge.application.SimpleApplication;
 
-public class CalendarApp extends javax.swing.JFrame implements Runnable {
+public class CalendarApp extends SimpleApplication implements Runnable {
 
     DefaultTableModel dtm;
     DefaultListModel dlm;
@@ -55,58 +56,32 @@ public class CalendarApp extends javax.swing.JFrame implements Runnable {
     List<Long> IDs = new ArrayList<>();
     List<Agenda> Agendas = new ArrayList<>();
     LocalDate localDate;
-    CalendarApp b;
+    //CalendarApp b;
     static Collection<Appointment> L = new ArrayList<>();
 
-    Timer timer = new Timer(500, (ActionEvent e) -> {
-        tickTock();//saati günceller.
-        refreshCalendar(currentMonth, currentYear);
-    });
+    public CalendarApp(String n, String c, String t, String e) {
+        super(n,c,t,e);
+    } 
 
-    Timer timer7 = new Timer(50000, (ActionEvent e) -> {
-        report();
-    });
 
-    Timer timer3 = new Timer(500, (ActionEvent e) -> {
-        IDs.clear();
-        Agendas.clear();
-        String selectedDate = currentDay + "." + (currentMonth + 1) + "." + currentYear;
-        choosenDate = selectedDate;
-
-        found = false;
-        dlm.clear();
-        for (Agenda x : data) {
-            if (selectedDate.equals(x.date) && !IDs.contains(x.id)) {
-                found = true;
-                IDs.add(x.id);
-                Agendas.add(x);
-                if (dlm.contains(x.eventName.toString() + " for day long") || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour)) {
-                    //içerde zaten varsa ekleme yapma
-                } else {
-                    if (x.isAllDay) {
-                        dlm.addElement(x.eventName.toString() + " for day long");
-                    } else {
-                        dlm.addElement(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour);
-                    }
-                }
-            }
-        }
-        if (!found) {
-            dlm.clear();
-            dlm.addElement("What would you like to do today?");
-        }
-    });
-
-    public CalendarApp() throws IOException {
+    public void run(File... f) {
+        setVisible(true);
+    }
+    
+    public void init(int x, int y, int width, int heigt) {
+        
         initComponents();
+        
+        //her sınıfa bunu ekle
+        super.init(x, y, width, heigt);
+        this.pack();
+        
         String[] columns = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
         dtm = new DefaultTableModel(null, columns);
         calendarTable.setModel(dtm);
         dlm = new DefaultListModel();
         agendaList.setModel(dlm);
         cal = new GregorianCalendar();
-
-        b = new CalendarApp(realDay, realMonth, realYear); //real date
 
         jPanel1.setBackground(Color.gray);
         this.setLocation(500, 200);
@@ -166,31 +141,35 @@ public class CalendarApp extends javax.swing.JFrame implements Runnable {
         timer7.start();
 
         if (!f.exists()) {
-            JOptionPane.showMessageDialog(this, "Old txt file not found.\n Creating new one.", "Error", JOptionPane.ERROR_MESSAGE);
-            List<String> lines = Arrays.asList("97106890,   Anniversary,   New Year,   1.1.2017,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "21085447,   Anniversary,   New Year,   1.1.2018,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "95113693,   Anniversary,   New Year,   1.1.2019,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "90362170,   Anniversary,   New Year,   1.1.2020,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "23200431,   Anniversary,   New Year,   1.1.2021,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "38838585,   Anniversary,   New Year,   1.1.2022,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "18476117,   Anniversary,   New Year,   1.1.2023,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "76574886,   Anniversary,   New Year,   1.1.2024,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "40267471,   Anniversary,   New Year,   1.1.2025,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "20792965,   Anniversary,   New Year,   1.1.2026,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "26700604,   Anniversary,   New Year,   1.1.2027,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
-                    "38646710,   Event,   İleri Programlama Proje Sunumu,   27.12.2017,   false,   11:30,   11:40,   Red,   B121,   5 dakikalık sunum olacak. Kolay gelsin...,   1 Day Before",
-                    "15554645,   Event,   Algoritma Analizi QUIZ,   27.12.2017,   false,   13:00,   15:50,   Red,   D105,   :/,   2 Day Before",
-                    "40735290,   Event,   Last of school,   29.12.2017,   true,   -,   null,   Blue,   fsmvü,   but its not over yet ...,   None",
-                    "58153479,   Event,   Veritabanı proje son sunum günü,   29.12.2017,   true,   -,   null,   Red,   fsmvü,   kolay gelsin,   1 Day Before",
-                    "28105567,   Event,   OS Thread Proje Son Teslim Günü,   31.12.2017,   true,   -,   null,   Red,   -,   -,   1 Day Before",
-                    "67482412,   Event,   Algoritma Analizi FİNAL,   4.1.2018,   true,   -,   null,   Red,   -,   -,   None",
-                    "24179495,   Event,   Etik FİNAL,   5.1.2018,   true,   -,   null,   Red,   -,   -,   None",
-                    "62551483,   Event,   Müh. Ekonomisi FİNAL,   6.1.2018,   true,   -,   null,   Red,   -,   -,   None",
-                    "50237652,   Event,   İşletim Sist. FİNAL,   9.1.2018,   true,   -,   null,   Red,   -,   -,   None",
-                    "14907055,   Event,   İleri Programlama FİNAL,   10.1.2018,   true,   -,   null,   Red,   -,   -,   1 Day Before",
-                    "53556799,   Event,   VeriTabanı FİNAL,   12.1.2018,   true,   -,   null,   Red,   -,   -,   1 Day Before");
-            Path file = Paths.get("Agenda.txt");
-            Files.write(file, lines, Charset.forName("UTF-8"));
+            try {
+                JOptionPane.showMessageDialog(this, "Old txt file not found.\n Creating new one.", "Error", JOptionPane.ERROR_MESSAGE);
+                List<String> lines = Arrays.asList("97106890,   Anniversary,   New Year,   1.1.2017,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "21085447,   Anniversary,   New Year,   1.1.2018,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "95113693,   Anniversary,   New Year,   1.1.2019,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "90362170,   Anniversary,   New Year,   1.1.2020,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "23200431,   Anniversary,   New Year,   1.1.2021,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "38838585,   Anniversary,   New Year,   1.1.2022,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "18476117,   Anniversary,   New Year,   1.1.2023,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "76574886,   Anniversary,   New Year,   1.1.2024,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "40267471,   Anniversary,   New Year,   1.1.2025,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "20792965,   Anniversary,   New Year,   1.1.2026,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "26700604,   Anniversary,   New Year,   1.1.2027,   true,   -,   -,   Blue,   ...Location,   Happy New Year!!!,   1 Day Before",
+                        "38646710,   Event,   İleri Programlama Proje Sunumu,   27.12.2017,   false,   11:30,   11:40,   Red,   B121,   5 dakikalık sunum olacak. Kolay gelsin...,   1 Day Before",
+                        "15554645,   Event,   Algoritma Analizi QUIZ,   27.12.2017,   false,   13:00,   15:50,   Red,   D105,   :/,   2 Day Before",
+                        "40735290,   Event,   Last of school,   29.12.2017,   true,   -,   null,   Blue,   fsmvü,   but its not over yet ...,   None",
+                        "58153479,   Event,   Veritabanı proje son sunum günü,   29.12.2017,   true,   -,   null,   Red,   fsmvü,   kolay gelsin,   1 Day Before",
+                        "28105567,   Event,   OS Thread Proje Son Teslim Günü,   31.12.2017,   true,   -,   null,   Red,   -,   -,   1 Day Before",
+                        "67482412,   Event,   Algoritma Analizi FİNAL,   4.1.2018,   true,   -,   null,   Red,   -,   -,   None",
+                        "24179495,   Event,   Etik FİNAL,   5.1.2018,   true,   -,   null,   Red,   -,   -,   None",
+                        "62551483,   Event,   Müh. Ekonomisi FİNAL,   6.1.2018,   true,   -,   null,   Red,   -,   -,   None",
+                        "50237652,   Event,   İşletim Sist. FİNAL,   9.1.2018,   true,   -,   null,   Red,   -,   -,   None",
+                        "14907055,   Event,   İleri Programlama FİNAL,   10.1.2018,   true,   -,   null,   Red,   -,   -,   1 Day Before",
+                        "53556799,   Event,   VeriTabanı FİNAL,   12.1.2018,   true,   -,   null,   Red,   -,   -,   1 Day Before");
+                Path file = Paths.get("Agenda.txt");
+                Files.write(file, lines, Charset.forName("UTF-8"));
+            } catch (IOException ex) {
+                Logger.getLogger(CalendarApp.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
 
         //yıl ekle
@@ -203,7 +182,71 @@ public class CalendarApp extends javax.swing.JFrame implements Runnable {
         readAgenda();
         fillTheAgenda();
         calendarTable.setDefaultRenderer(calendarTable.getColumnClass(0), new CalendarRenderer());
+        }
+    
+    public void start(int x) {
+        n = x;
+        thd = new Thread(this);
+        thd.start();
     }
+
+    public void stop() {
+        x = false;
+        System.out.println("stopped");
+        n = 0;
+        thd = null;
+    }
+
+    public void run() {
+        x = true;
+        while (n > 0) {
+            report();
+            try { //why try?  ...
+                Thread.sleep(delay);
+            } catch (Exception e) {
+            }
+            nextDay();
+        }
+    }
+    
+    Timer timer = new Timer(500, (ActionEvent e) -> {
+        tickTock();//saati günceller.
+        refreshCalendar(currentMonth, currentYear);
+    });
+
+    Timer timer7 = new Timer(50000, (ActionEvent e) -> {
+        report();
+    });
+
+    Timer timer3 = new Timer(500, (ActionEvent e) -> {
+        IDs.clear();
+        Agendas.clear();
+        String selectedDate = currentDay + "." + (currentMonth + 1) + "." + currentYear;
+        choosenDate = selectedDate;
+
+        found = false;
+        dlm.clear();
+        for (Agenda x : data) {
+            if (selectedDate.equals(x.date) && !IDs.contains(x.id)) {
+                found = true;
+                IDs.add(x.id);
+                Agendas.add(x);
+                if (dlm.contains(x.eventName.toString() + " for day long") || dlm.contains(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour)) {
+                    //içerde zaten varsa ekleme yapma
+                } else {
+                    if (x.isAllDay) {
+                        dlm.addElement(x.eventName.toString() + " for day long");
+                    } else {
+                        dlm.addElement(x.eventName.toString() + " " + x.fromHour + " - " + x.toHour);
+                    }
+                }
+            }
+        }
+        if (!found) {
+            dlm.clear();
+            dlm.addElement("What would you like to do today?");
+        }
+    });
 
     int dayx, monthx, yearx, hourx, minutex; //current date d/m/y
     static int dayy, monthh, yearr, hourr, minn;
@@ -211,11 +254,6 @@ public class CalendarApp extends javax.swing.JFrame implements Runnable {
     int n = 0; //days
     Thread thd;
 
-    public CalendarApp(int d, int m, int y) {
-        dayx = d;
-        monthx = m;
-        yearx = y;
-    }
 
     public void nextDay() { //modifies d/m/y to the following day
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/M/yyyy");
@@ -264,31 +302,7 @@ public class CalendarApp extends javax.swing.JFrame implements Runnable {
         }
     }
 
-    public void start(int x) {
-        n = x;
-        thd = new Thread(this);
-        thd.start();
-    }
 
-    public void stop() {
-        x = false;
-        System.out.println("stopped");
-        n = 0;
-        thd = null;
-    }
-
-    public void run() {
-        x = true;
-        while (n > 0) {
-            report();
-            try { //why try?  ...
-                Thread.sleep(delay);
-            } catch (Exception e) {
-            }
-            nextDay();
-            n--;
-        }
-    }
 
     void tickTock() {
         String timeS = DateFormat.getDateTimeInstance().format(new Date());
@@ -836,7 +850,7 @@ public class CalendarApp extends javax.swing.JFrame implements Runnable {
         if (jToggleButton1.isSelected()) {
             System.out.println("selected");
 
-            b.start(60);   //start new Thread using b
+            this.start(60);   //start new Thread using b
             jToggleButton1.setText("Go back to normal");
 
             timer3.setRepeats(true);
@@ -846,7 +860,7 @@ public class CalendarApp extends javax.swing.JFrame implements Runnable {
 
         } else {
             System.out.println("released");
-            b.stop();
+            this.stop();
             date.setText(irlDate);
             jToggleButton1.setText("Time Booster");
             timer3.stop();
@@ -877,11 +891,7 @@ public class CalendarApp extends javax.swing.JFrame implements Runnable {
         //</editor-fold>
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                try {
-                    new CalendarApp().setVisible(true);
-                } catch (IOException ex) {
-                    Logger.getLogger(CalendarApp.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                new CalendarApp(null, null, null, null).setVisible(true);
             }
         });
     }
