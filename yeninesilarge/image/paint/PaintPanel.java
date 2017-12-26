@@ -8,6 +8,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import javax.imageio.*;
 import java.awt.image.*;
@@ -122,6 +125,15 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 		makeButton(pnlTools, null, "Redo").addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				pnlImage.redo();
+			}
+		});
+
+		makeComponent(pnlTools, makeSeparator(), null);
+		makeButton(pnlTools, null, "Save").addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				//stackoverflow.com/questions/5175728/how-to-get-the-current-date-time-in-java
+				String timestamp = java.time.LocalDateTime.now().toString();
+				pnlImage.write(timestamp);
 			}
 		});
 
@@ -254,7 +266,6 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			params.put("y2", y2);
 
 			if( selectedTool.equals(Tool.PENCIL) || selectedTool.equals(Tool.RUBBER) ) {
-				System.out.println("pencil");
 				pnlImage.completeDraw(params);
 				params = Tool.buildParams(selectedTool, x2, y2, x2, y2, 
 								color,
@@ -347,6 +358,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 			pnlColor.setBackground(color);
 		}
 	};
+
+
 }
 
 //src : dzone.com/articles/unselect-all-toggle-buttons

@@ -8,5 +8,5 @@ javac yeninesilarge/util/*.java
 javac yeninesilarge/image/*.java
 #javac yeninesilarge/image/editor/*.java
 javac yeninesilarge/image/paint/*.java
-#javac yeninesilarge/calendarapp/*.java
+javac yeninesilarge/calendarapp/*.java
 #javac yeninesilarge/videoplayer/*.java

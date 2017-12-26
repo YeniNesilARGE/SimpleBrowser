@@ -75,7 +75,7 @@ public class ApplicationManager extends Properties {
 	}
 
 	public SimpleApplication getApplication(String name) {
-		
+		return applications.get(name);
 	}
 
 	// return result
@@ -142,10 +142,5 @@ public class ApplicationManager extends Properties {
 		return app;
 	}
 
-	class ExtensionNotDefinedException extends RuntimeException{
-		ExtensionNotDefinedException(String message) {
-			super(message);
-		}
-	}
-
 }
+

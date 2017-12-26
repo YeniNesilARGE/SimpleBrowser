@@ -22,41 +22,34 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.FilenameFilter;
 
-import javax.swing.*;
+public class Browser{
 
-public class Browser extends JFrame {
-
-	public static void main(String... args){
-
-		ApplicationManager appM = ApplicationManager.getInstance();
-		Browser browser = new Browser();
-
-
-		File f = new File("/home/bilalekrem/Desktop/SimpleBrowser/yeninesilarge/images/dog.jpg");
-
-
-		browser.loadApplications();
-/*		String extension = browser.getExtension(f);		
-		app = appManager.getApplications(extension).get(0);
-		app.init(50, 50, 900, 900);
-		app.run(f);*/
-
-
-	}
-
-	String getExtension(File f) {
+	static String getExtension(File f) {
 		if ( f.isDirectory() ) return null;
 
-		String extension = null;;
 		String fileName = f.getName();
-		int i = fileName.lastIndexOf('.');
-		if (i >= 0) {
-			cdextension = fileName.substring(i+1);
-		}
-		return extension;
+		
+		return getExtension(fileName);
 	}
 
-	void loadApplications() {
+	static String getExtension(String f) {
+		String extension = "";
+		int i = f.lastIndexOf('.');
+		if (i >= 0) {
+			extension = f.substring(i+1);
+		}
+		return extension.toLowerCase();
+	}
+
+	static String getFileName(String fileName) { // input with extension A.txt -> A
+		int i = fileName.lastIndexOf('.');
+		if (i >= 0) {
+			fileName = fileName.substring(0, i);
+		}
+		return fileName;
+	}
+
+	static void loadApplications() {
 		int counter = 0;
 		File yna = new File(ApplicationManager.USER_HOME, ApplicationManager.DIR );
 		if( !yna.exists() )  return;
@@ -75,15 +68,18 @@ public class Browser extends JFrame {
 		ApplicationManager appManager = ApplicationManager.getInstance();
 		for (File file : yna.listFiles() ) {
 			if (!file.isDirectory()) { 
-				String applicationName = file.getName();
-				SimpleApplication app = appManager.load(applicationName);
+				String fileName = file.getName();
+				String applicationName = getFileName(fileName);
+				SimpleApplication app = null;
+				try { 
+					app = appManager.load(applicationName);
+				} catch (Exception ex) {
+					continue;
+				}
 				appManager.registerApplication(app);
+				System.out.println("loaded - " + app.name);
 			}
 		}
-
-		
-				
-
 	}
 
 }
