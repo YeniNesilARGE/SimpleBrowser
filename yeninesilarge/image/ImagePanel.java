@@ -13,7 +13,12 @@ public class ImagePanel extends JPanel{
 	private int w = -1 , h = -1;
 	@Override	
 	public void paint(Graphics g){
-		super.paint(g);
+        try{
+            super.paint(g);
+        } catch(Exception ex){
+            // sssh
+        }
+		
         if (w > -1 && h > -1){
             g.drawImage(image,0,0,w,h,null);
         }
