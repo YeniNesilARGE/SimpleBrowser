@@ -160,10 +160,10 @@ private void init(){
             InvertingColors(evt);
         }
     });
-    JButton btn14 = new JButton("OldSchool");
+    JButton btn14 = new JButton("ColorFocusRed");
     btn14.addActionListener(new java.awt.event.ActionListener(){
         public void actionPerformed(java.awt.event.ActionEvent evt){
-            OldSchoolButton(evt);
+            ColorFocusButton(evt);
         }
     });
     JButton btn15 = new JButton("Save");
@@ -415,27 +415,27 @@ private void InvertingColors(java.awt.event.ActionEvent evt){
     BI = Invert();
     i.setImage(BI);
 }
-private void OldSchoolButton(java.awt.event.ActionEvent evt){
+private void ColorFocusButton(java.awt.event.ActionEvent evt){
     if(BI != null){
     WritableRaster R = BI.getRaster();
     UndoImage ui = new UndoImage();
     ui.R=R;ui.bi=BI;
     undo.push(ui);
-    double con1 = 0.4, con2 = 0.5, con3 = 0.6;
     int m;
     int[] rgb ={0,0,0};
     int w = BI.getWidth(), h = BI.getHeight();
     for(int x=0;x<w;x++){
         for(int y=0;y<h;y++){
                 R.getPixel(x,y,rgb);
-                rgb[0] = (int) (rgb[0] * con1);
-                rgb[1] = (int) (rgb[1] * con1);
-                rgb[2] = (int) (rgb[2] * con1);
+                if(!control(rgb)){
+                m = (rgb[0]+rgb[1]+rgb[2])/3;
+                rgb[0] = m;
+                rgb[1] = m;
+                rgb[2] = m;
                 R.setPixel(x,y,rgb);
+                }
             }
-            
         }
-    
     i.setImage(BI);
     }else{
         JOptionPane.showMessageDialog(this,"Please open a 'jpg' file.");
@@ -670,6 +670,12 @@ private BufferedImage scale(){
 private boolean bound(int arr[]){
     if(arr[0]>255||arr[1]>255||arr[2]>255){return false;}
     if(arr[0]<0||arr[1]<0||arr[2]<0){return false;}
+    return true;
+}
+private boolean control(int arr[]){
+    double BGort = (double) (arr[1]+arr[2])/2;
+    if(arr[1]<arr[2]-10&&arr[1]>arr[2]+10){return false;}
+    if(arr[0]<BGort*(2.6)){return false;}
     return true;
 }
 private double getDist(int x,int y){
