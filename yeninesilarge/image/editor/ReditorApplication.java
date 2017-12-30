@@ -14,15 +14,19 @@ import java.util.HashSet;
 import java.awt.event.*;
 import java.util.Stack;
 
+import yeninesilarge.application.*;
+
 class UndoImage{
     WritableRaster R;
     BufferedImage bi;
 }
 
-public class Reditor extends javax.swing.JFrame {
+public class ReditorApplication extends SimpleApplication{
     
-public Reditor(){init();}
-
+public ReditorApplication(String n, String c, String t, String e) {
+		super(n,c,t,e);
+}
+ 
 ImagePanel i = new ImagePanel();
 ImagePanel iTemp = new ImagePanel();
 
@@ -37,6 +41,32 @@ static BufferedImage BI;//current image we are worked on
 static BufferedImage frame;//frame file that we will aplly to image
 
 String filePath;
+
+	public void run(File... f) {
+		init();
+
+		File file = f[0];
+        try{
+            filePath = file.getAbsolutePath();
+            i.setImage(ImageIO.read(file));
+            iTemp.setImage(ImageIO.read(file));
+            BI = i.getImage();
+            while(!undo.empty()){
+                undo.pop();
+            }
+            while(!redo.empty()){
+                redo.pop();
+            }
+		} catch(Exception ex ) { System.out.println("ex occured") ; }
+		this.setTitle(title);
+		this.setVisible(true);
+	}
+
+	public void init(int x, int y, int width, int height){
+		super.init(x, y, width, height);
+
+	}
+
 
 private void init(){
     //Buttons 
@@ -225,14 +255,15 @@ private void init(){
     add(pane1,BorderLayout.NORTH);
     add(scroll,BorderLayout.CENTER);
     add(pane3,BorderLayout.SOUTH);
-    pack();
+   
     
-    setTitle("rEditor");
+    setTitle(this.title);
     setExtendedState(JFrame.MAXIMIZED_BOTH);
     setMinimumSize(new Dimension(300,300));
     setLocationRelativeTo(null);
-    setDefaultCloseOperation(EXIT_ON_CLOSE);
     setFocusTraversalKeysEnabled(false);
+	super.init(0,0,0,0);
+	pack();
 }
 
 private void GrayScaleButton(java.awt.event.ActionEvent evt){
@@ -654,8 +685,8 @@ private String getFileExt(File file){
 public static void main(String[] argv){
     EventQueue.invokeLater(new Runnable(){
         public void run(){
-            Reditor r = new Reditor();
-            r.setVisible(true);
+           // ReditorApplication r = new ReditorApplication();
+            //r.setVisible(true);
         }
     });
 }

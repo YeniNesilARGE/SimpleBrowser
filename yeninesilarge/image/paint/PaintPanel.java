@@ -26,6 +26,8 @@ public class PaintPanel extends JPanel implements ToolButtonGroup.ToolButtonList
 	static boolean dash;
 	static Color color;
 
+	private JButton undo, redo;
+
 	private static final String DASH = "Dash";
 	private static final String FILL = "Fill";
 

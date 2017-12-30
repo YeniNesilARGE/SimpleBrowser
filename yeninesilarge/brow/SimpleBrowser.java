@@ -111,6 +111,8 @@ public class SimpleBrowser extends javax.swing.JFrame implements KeyListener {
 			runWith(extension, files);
 				
         } else if (e.getKeyCode() == KeyEvent.VK_F5){
+		ApplicationManager appManager = ApplicationManager.getInstance();
+			appManager.clearAll();
 			browser.loadApplications();
 		}
     }

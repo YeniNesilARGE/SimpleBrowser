@@ -67,7 +67,7 @@ public class Browser{
 
 		ApplicationManager appManager = ApplicationManager.getInstance();
 		for (File file : yna.listFiles() ) {
-			if (!file.isDirectory()) { 
+			if (!file.isDirectory() && ApplicationManager.EXT.contains(getExtension(file)) ) { 
 				String fileName = file.getName();
 				String applicationName = getFileName(fileName);
 				SimpleApplication app = null;
@@ -75,7 +75,10 @@ public class Browser{
 					app = appManager.load(applicationName);
 				} catch (Exception ex) {
 					continue;
+				} finally {
+					if ( app == null ) continue;
 				}
+				
 				appManager.registerApplication(app);
 				System.out.println("loaded - " + app.name);
 			}

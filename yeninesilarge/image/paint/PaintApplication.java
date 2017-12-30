@@ -28,16 +28,13 @@ public class PaintApplication extends SimpleApplication {
 		this.setFocusTraversalKeysEnabled(false);
 		this.addKeyListener( (KeyListener) panel); // key listener
 
+		this.setTitle(title);
 		this.setVisible(true);
 	}
 
 	public void init(int x, int y, int width, int height){
-		super.init(x, y, width, height);
+		super.init(100, 100, 900, 700);
 
 	}
 
-	@Override
-	public String toString(){
-		return name;
-	}
 }
