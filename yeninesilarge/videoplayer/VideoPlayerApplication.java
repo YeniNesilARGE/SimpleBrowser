@@ -1,5 +1,6 @@
 package yeninesilarge.videoplayer;
 
+import yeninesilarge.application.SimpleApplication;
 import yeninesilarge.image.ImagePanel;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -24,8 +25,8 @@ import javax.swing.filechooser.FileFilter;
  *
  * @author Salimsah
  */
-public class VideoPlayer extends javax.swing.JFrame {
-    final ImageIcon icn1;
+public class VideoPlayerApplication extends SimpleApplication {
+    private ImageIcon icn1;
     BufferedImage image = new BufferedImage(20,20,6);
     JFileChooser fc;
     File[] files;
@@ -66,12 +67,12 @@ public class VideoPlayer extends javax.swing.JFrame {
         Thread thd = null;
         int i;
         boolean stp = false;
-        VideoPlayer ths;
+        VideoPlayerApplication ths;
         boolean brk = false;
         public void setI(int i){
             this.i = i;
         }
-        public void setThis(VideoPlayer typeThis){
+        public void setThis(VideoPlayerApplication typeThis){
             ths = typeThis;
         }
         public void stop(){
@@ -79,6 +80,7 @@ public class VideoPlayer extends javax.swing.JFrame {
         }
         public void start() {  
             stp = false; thd = new Thread(this); thd.start(); 
+
         }
         public void brk(boolean c){
             brk = c;
@@ -93,14 +95,13 @@ public class VideoPlayer extends javax.swing.JFrame {
                             try {
                                 Thread.sleep(1);
                             } catch (InterruptedException ex) {
-                                Logger.getLogger(VideoPlayer.class.getName()).log(Level.SEVERE, null, ex);
+                                Logger.getLogger(VideoPlayerApplication.class.getName()).log(Level.SEVERE, null, ex);
                             }
                             
                             if (brk == true) {
                                 break;
                             }
                         }
-                        
                         id.setImage(images[i]);
                         id.setPicSize(OutPanel.getWidth(),OutPanel.getHeight());
                         OutPanel.removeAll();
@@ -113,7 +114,7 @@ public class VideoPlayer extends javax.swing.JFrame {
                             try {
                             Thread.sleep(delay);
                             } catch (InterruptedException ex) {
-                            Logger.getLogger(VideoPlayer.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(VideoPlayerApplication.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         }
                         brk=false;
@@ -129,17 +130,25 @@ public class VideoPlayer extends javax.swing.JFrame {
     /**
      * Creates new form Entertainment
      */
-    public VideoPlayer() {
+    public VideoPlayerApplication(String n, String c, String t, String e) {
+		super(n,c,t,e);
         
+	} 
+    public VideoPlayerApplication() {
+        super("","","","");
+        
+        
+    }
+    public void init(int x, int y, int width, int height){
         idrw.setThis(this);
         id = new ImagePanel();
         
         try {
             Graphics2D g = image.createGraphics();
-            g.drawImage(ImageIO.read(new File("/Users/salimsah/NetBeansProjects/BLM305-TermWork/src/main/repeat.png")), 0, 0, 20, 20, null);
+            g.drawImage(ImageIO.read(new File("yeninesilarge/images/repeat.png")), 0, 0, 20, 20, null);
             g.dispose();
         } catch (IOException ex) {
-            Logger.getLogger(VideoPlayer.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(VideoPlayerApplication.class.getName()).log(Level.SEVERE, null, ex);
         }
         icn1 = new ImageIcon(image);
         initComponents();
@@ -158,7 +167,30 @@ public class VideoPlayer extends javax.swing.JFrame {
         fc.setFileFilter(ff);
         
     }
+    public void run(File... var){
+        
+        files = var;
+        
+        idrw.stop();
+        images = new BufferedImage[files.length];
+        for (int i = 0; i < files.length; i++) {
+            try {
+                images[i] = ImageIO.read(files[i]);
+            } catch (IOException ex) {
+                Logger.getLogger(VideoPlayerApplication.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        System.out.println(files[0].getName());
+        pathjLabel.setText(files[0].getParentFile().getAbsolutePath());
+        videoNamejLabel.setText(files[0].getParentFile().getName());
+        jSlider.setMaximum(files.length-1);
+        System.out.println("id o" + id);
+        idrw.start();
+        this.setVisible(true);
+        System.out.println("id s" + id);
 
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -339,7 +371,7 @@ public class VideoPlayer extends javax.swing.JFrame {
                 try {
                     images[i] = ImageIO.read(files[i]);
                 } catch (IOException ex) {
-                    Logger.getLogger(VideoPlayer.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(VideoPlayerApplication.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             pathjLabel.setText(files[0].getParentFile().getAbsolutePath());
@@ -427,7 +459,7 @@ public class VideoPlayer extends javax.swing.JFrame {
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException ex) {
-                    Logger.getLogger(VideoPlayer.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(VideoPlayerApplication.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 idrw.setI(images.length-3);
                 idrw.brk(true);
@@ -480,13 +512,13 @@ public class VideoPlayer extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(VideoPlayer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VideoPlayerApplication.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(VideoPlayer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VideoPlayerApplication.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(VideoPlayer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VideoPlayerApplication.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(VideoPlayer.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VideoPlayerApplication.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
         //</editor-fold>
@@ -494,7 +526,9 @@ public class VideoPlayer extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new VideoPlayer().setVisible(true);
+                VideoPlayerApplication a = new VideoPlayerApplication("","","","");
+                a.init(0,0,0,0);
+                a.run(new File ("/Users/salimsah/Desktop/Bugs/scene00387.png"),new File ("/Users/salimsah/Desktop/Bugs/scene00892.png"),new File ("/Users/salimsah/Desktop/Bugs/scene01002.png"));
             }
         });
     }
