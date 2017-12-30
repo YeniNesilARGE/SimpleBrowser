@@ -56,7 +56,7 @@ $ JAVA_HOME=jdk path
 $ ./build.sh
 ```
 
-Collection compiled classes into JAR file..
+Collect the compiled classes into JAR file..
 
 ```sh
 $ ./makeJar.sh
