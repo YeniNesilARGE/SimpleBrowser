@@ -36,7 +36,7 @@ Simple Browser is a simple file browser.
 
 Simple Browser uses pure Java JDK. It's written in Java 8 and SimpleBrowser is an open source project on GitHub.
 
-I must say that, Simple Browser might be needed some modified for never versions of Java 9 because of reflection. Take a look at it [here.] [reflectionAccess]
+I must say that, Simple Browser might be needed some modified for never versions of Java 9 because of reflection. Take a look at it [here.][reflectionAccess]
 
 ### Installation
 
