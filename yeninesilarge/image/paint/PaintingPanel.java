@@ -148,21 +148,26 @@ public class PaintingPanel extends ImagePanel{
 	public void write(String imageName) {
 		
 		try { 
-			BufferedImage img = getImage();
-			Graphics g = img.createGraphics();
+
+			BufferedImage image = new BufferedImage(getWidth(),getHeight(), BufferedImage.TYPE_INT_RGB);
+			Graphics2D g2 = image.createGraphics();
+			paint(g2);
 
 			for( Map<String, Object> params : shapes ) {
 				String tag = params.get("tag").toString();
 				Tool t = ToolFactory.getInstance(tag);
-				t.operate(g, params);
+				t.operate(g2, params);
 			}
 
 			File yna = new File(ApplicationManager.USER_HOME, ApplicationManager.DIR);
 			if( !yna.exists() ) yna.mkdir();
 
-			File imageFile = new File(yna, imageName);
+			File imageFile = new File(yna, imageName+ ".jpg");
 
-			ImageIO.write(img, "png", imageFile); 
+			ImageIO.write(image, "jpg", imageFile); 
+
+			shapes.clear();
+			redo.clear();
 		}catch (Exception x){
 	
 		}

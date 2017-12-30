@@ -179,7 +179,8 @@ class Rubber extends Tool {
 		int width = 20;
 		int height = 20;
 
-		g.clearRect(x1,y1,width,height);
+		g.setColor(Color.WHITE);
+		g.fillRect(x1,y1,width,height);
 	}
 }
 

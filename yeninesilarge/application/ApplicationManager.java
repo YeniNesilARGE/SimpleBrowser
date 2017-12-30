@@ -66,6 +66,11 @@ public class ApplicationManager extends Properties {
 		apps.add(app);
 	}
 
+	public void clearAll(){
+		extManager.clear();
+		applications.clear();
+	}
+
 	public void registerApplication(SimpleApplication app) {
 		for ( String extension : app.extensions ) {
 			createAssociation(extension, app);

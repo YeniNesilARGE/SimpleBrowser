@@ -166,6 +166,8 @@ public class VideoPlayerApplication extends SimpleApplication {
         
         fc.setFileFilter(ff);
         
+		super.init(50,50,0,0);
+		pack();
     }
     public void run(File... var){
         
