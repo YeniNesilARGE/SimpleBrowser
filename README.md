@@ -1,5 +1,5 @@
 # Simple Browser
-Simple Browser is a simple file browser.
+Simple Browser is a simple file browser that practice an application of [the course][thecourse] which is given by [M. Akif Eyler][maeyler].
 
   - Explore file system.
   - Choose a file to open.
@@ -83,6 +83,8 @@ $ cp VideoPlayer.app ~/yna
 [enesky]: <https://github.com/EnesKy>
 [furkansarihan]: <https://github.com/furkansarihan>
 [salimsah]: <https://github.com/salimsah>
+[thecourse]: <https://github.com/maeyler/BLM305>
+[maeyler]: <https://github.com/maeyler>
 [yna]: <https://github.com/YeniNesilARGE/SimpleBrowser>
 [reflectionAccess]: <http://mail.openjdk.java.net/pipermail/jigsaw-dev/2017-March/011763.html>
 [dillinger]: <http://dillinger.io>
